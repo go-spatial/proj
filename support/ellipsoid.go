@@ -2,6 +2,8 @@ package support
 
 import (
 	"math"
+
+	"github.com/go-spatial/proj4go/merror"
 )
 
 func (ps *ProjString) processEllipsoid(P *Projection) error {
@@ -83,16 +85,16 @@ func ellpsSize(ps *ProjString, P *Projection) error {
 		if aWasSet {
 			return nil
 		}
-		return ErrMajorAxisNotGiven
+		return merror.New(ErrMajorAxisNotGiven)
 	}
 
 	P.DefSize = key
 	P.a = value
 	if P.a <= 0.0 {
-		return ErrMajorAxisNotGiven
+		return merror.New(ErrMajorAxisNotGiven)
 	}
 	if P.a == math.MaxFloat64 {
-		return ErrMajorAxisNotGiven
+		return merror.New(ErrMajorAxisNotGiven)
 	}
 
 	if key == "R" {
@@ -165,7 +167,7 @@ func pjCalcEllipsoidParams(P *Projection, a float64, es float64) error {
 
 	P.oneEs = 1. - P.es
 	if P.oneEs == 0. {
-		return ErrEccentricityIsOne
+		return merror.New(ErrEccentricityIsOne)
 	}
 
 	P.rOneEs = 1. / P.oneEs
@@ -183,12 +185,12 @@ func ellpsEllps(ps *ProjString, P *Projection) error {
 
 	/* Then look up the right size and shape parameters from the builtin list */
 	if name == "" {
-		return ErrInvalidArg
+		return merror.New(ErrInvalidArg)
 	}
 
 	ellps := pjFindEllps(name)
 	if ellps == nil {
-		return ErrUnknownEllpParam
+		return merror.New(ErrUnknownEllpParam)
 	}
 
 	ellpsSize(ps, P)
@@ -238,10 +240,10 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "rf":
 		P.rf = foundValue
 		if P.rf == math.MaxFloat64 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		if P.rf == 0 {
-			return ErrRevFlatteningIsZero
+			return merror.New(ErrRevFlatteningIsZero)
 		}
 		P.f = 1 / P.rf
 		P.es = 2*P.f - P.f*P.f
@@ -250,10 +252,10 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "f":
 		P.f = foundValue
 		if P.f == math.MaxFloat64 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		if P.f == 0 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		P.rf = 1 / P.f
 		P.es = 2*P.f - P.f*P.f
@@ -262,23 +264,23 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "es":
 		P.es = foundValue
 		if P.es == math.MaxFloat64 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		if P.es == 1 {
-			return ErrEccentricityIsOne
+			return merror.New(ErrEccentricityIsOne)
 		}
 
 	/* eccentricity, e */
 	case "e":
 		P.e = foundValue
 		if P.e == math.MaxFloat64 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		if P.e == 0 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		if P.e == 1 {
-			return ErrEccentricityIsOne
+			return merror.New(ErrEccentricityIsOne)
 		}
 		P.es = P.e * P.e
 
@@ -286,10 +288,10 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "b":
 		P.b = foundValue
 		if P.b == math.MaxFloat64 {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		if P.b == 0 {
-			return ErrEccentricityIsOne
+			return merror.New(ErrEccentricityIsOne)
 		}
 		if P.b == P.a {
 			break
@@ -298,12 +300,12 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 		P.es = 2*P.f - P.f*P.f
 
 	default:
-		return ErrInvalidArg
+		return merror.New(ErrInvalidArg)
 
 	}
 
 	if P.es < 0 {
-		return ErrEsLessThanZero
+		return merror.New(ErrEsLessThanZero)
 	}
 
 	return nil
@@ -355,7 +357,7 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 	/* R_h - a sphere with R = the harmonic mean of the ellipsoid */
 	case "R_h":
 		if P.a+P.b == 0 {
-			return ErrToleranceCondition
+			return merror.New(ErrToleranceCondition)
 		}
 		P.a = (2 * P.a * P.b) / (P.a + P.b)
 
@@ -364,14 +366,14 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 	case "R_lat_a", "R_lat_g":
 		v, ok := ps.Args.GetAsString(key)
 		if !ok {
-			return ErrInvalidArg
+			return merror.New(ErrInvalidArg)
 		}
 		t, err := DMSToR(v)
 		if err != nil {
 			return err
 		}
 		if math.Abs(t) > mPiOverTwo {
-			return ErrRefRadLargerThan90
+			return merror.New(ErrRefRadLargerThan90)
 		}
 		t = math.Sin(t)
 		t = 1 - P.es*t*t
@@ -382,7 +384,7 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 		}
 
 	default:
-		return ErrInvalidArg
+		return merror.New(ErrInvalidArg)
 
 	}
 

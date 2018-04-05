@@ -1,5 +1,7 @@
 package support
 
+import "github.com/go-spatial/proj4go/merror"
+
 // ProjString represents a projection string, such as "+proj=utm +zone=11 +datum=WGS84"
 // TODO: we don't support the "pipeline" or "step" keywords
 type ProjString struct {
@@ -27,7 +29,7 @@ func NewProjString(source string) (*ProjString, error) {
 
 	proj, ok := ps.Args.GetAsString("proj")
 	if !ok || proj == "" {
-		return nil, ProjValueMissing
+		return nil, merror.New(ProjValueMissing)
 	}
 
 	_, err = ps.processDatum()
@@ -42,12 +44,12 @@ func (ps *ProjString) processInit() error {
 
 	numInit := ps.Args.Count("init")
 	if numInit > 1 {
-		return BadProjStringError
+		return merror.New(BadProjStringError)
 	}
 
 	// TODO: support "init" expansion
 	if numInit != 0 {
-		return NotYetSupported
+		return merror.New(NotYetSupported)
 	}
 	return nil
 }
@@ -66,7 +68,7 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 
 		datum := Datums.Lookup(datumName)
 		if datum == nil {
-			return nil, NoSuchDatum
+			return nil, merror.New(NoSuchDatum)
 		}
 
 		// add the ellipse to the end of the list
@@ -77,12 +79,12 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 
 	_, ok = ps.Args.GetAsString("nadgrids")
 	if ok {
-		return nil, NotYetSupported
+		return nil, merror.New(NotYetSupported)
 	}
 
 	_, ok = ps.Args.GetAsString("catalog")
 	if ok {
-		return nil, NotYetSupported
+		return nil, merror.New(NotYetSupported)
 	}
 
 	values, ok := ps.Args.GetAsFloats("towgs84")
@@ -114,7 +116,7 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 			proj.DatumParams[6] = (proj.DatumParams[6] / 1000000.0) + 1
 
 		} else {
-			return nil, BadProjStringError
+			return nil, merror.New(BadProjStringError)
 		}
 
 		/* Note that pj_init() will later switch datum_type to

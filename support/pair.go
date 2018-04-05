@@ -1,9 +1,10 @@
 package support
 
 import (
-	"log"
 	"strconv"
 	"strings"
+
+	"github.com/go-spatial/proj4go/merror"
 )
 
 // Pair is a simple key-value pair
@@ -46,7 +47,7 @@ func NewPairListFromString(source string) (*PairList, error) {
 		v := strings.Split(w, "=")
 
 		if v[0] == "" {
-			return nil, BadProjStringError
+			return nil, merror.New(BadProjStringError)
 		}
 
 		switch len(v) {
@@ -62,9 +63,8 @@ func NewPairListFromString(source string) (*PairList, error) {
 			pair.Value = v[1]
 
 		default:
-			log.Printf("BBB")
 			// "proj=utm=bzzt"
-			return nil, BadProjStringError
+			return nil, merror.New(BadProjStringError)
 		}
 
 		ret.Add(pair)
