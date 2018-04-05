@@ -47,7 +47,7 @@ func NewPairListFromString(source string) (*PairList, error) {
 		v := strings.Split(w, "=")
 
 		if v[0] == "" {
-			return nil, merror.New(BadProjStringError)
+			return nil, merror.New(merror.BadProjStringError)
 		}
 
 		switch len(v) {
@@ -57,14 +57,14 @@ func NewPairListFromString(source string) (*PairList, error) {
 		case 1:
 			// "proj=" is okay
 			pair.Key = v[0]
-			pair.Value = v[1]
+			pair.Value = ""
 		case 2:
 			pair.Key = v[0]
 			pair.Value = v[1]
 
 		default:
 			// "proj=utm=bzzt"
-			return nil, merror.New(BadProjStringError)
+			return nil, merror.New(merror.BadProjStringError)
 		}
 
 		ret.Add(pair)
@@ -72,6 +72,16 @@ func NewPairListFromString(source string) (*PairList, error) {
 
 	return ret, nil
 
+}
+
+// Len returns the number of pairs in the list
+func (pl *PairList) Len() int {
+	return len(pl.pairs)
+}
+
+// Get returns the ith pair in the list
+func (pl *PairList) Get(i int) Pair {
+	return pl.pairs[i]
 }
 
 // Add adds a Pair to the end of the list
@@ -84,8 +94,8 @@ func (pl *PairList) AddList(list *PairList) {
 	pl.pairs = append(pl.pairs, list.pairs...)
 }
 
-// Contains returns true iff the key is present in the list
-func (pl *PairList) Contains(key string) bool {
+// ContainsKey returns true iff the key is present in the list
+func (pl *PairList) ContainsKey(key string) bool {
 
 	for _, pair := range pl.pairs {
 		if pair.Key == key {
@@ -96,8 +106,8 @@ func (pl *PairList) Contains(key string) bool {
 	return false
 }
 
-// Count returns the number of times the key is in the list
-func (pl *PairList) Count(key string) int {
+// CountKey returns the number of times the key is in the list
+func (pl *PairList) CountKey(key string) int {
 
 	count := 0
 	for _, pair := range pl.pairs {

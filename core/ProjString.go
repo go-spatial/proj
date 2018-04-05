@@ -1,12 +1,15 @@
-package support
+package core
 
-import "github.com/go-spatial/proj4go/merror"
+import (
+	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj4go/support"
+)
 
 // ProjString represents a projection string, such as "+proj=utm +zone=11 +datum=WGS84"
 // TODO: we don't support the "pipeline" or "step" keywords
 type ProjString struct {
 	Source string
-	Args   *PairList
+	Args   *support.PairList
 }
 
 // NewProjString returns a new ProjString object representing the given string
@@ -15,7 +18,7 @@ func NewProjString(source string) (*ProjString, error) {
 		Source: source,
 	}
 
-	pairs, err := NewPairListFromString(source)
+	pairs, err := support.NewPairListFromString(source)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +32,7 @@ func NewProjString(source string) (*ProjString, error) {
 
 	proj, ok := ps.Args.GetAsString("proj")
 	if !ok || proj == "" {
-		return nil, merror.New(ProjValueMissing)
+		return nil, merror.New(merror.ProjValueMissing)
 	}
 
 	_, err = ps.processDatum()
@@ -42,14 +45,14 @@ func NewProjString(source string) (*ProjString, error) {
 
 func (ps *ProjString) processInit() error {
 
-	numInit := ps.Args.Count("init")
+	numInit := ps.Args.CountKey("init")
 	if numInit > 1 {
-		return merror.New(BadProjStringError)
+		return merror.New(merror.BadProjStringError)
 	}
 
 	// TODO: support "init" expansion
 	if numInit != 0 {
-		return merror.New(NotYetSupported)
+		return merror.New(merror.NotYetSupported)
 	}
 	return nil
 }
@@ -66,25 +69,25 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 	datumName, ok := ps.Args.GetAsString("datum")
 	if ok {
 
-		datum := Datums.Lookup(datumName)
-		if datum == nil {
-			return nil, merror.New(NoSuchDatum)
+		datum, ok := DatumTable[datumName]
+		if !ok {
+			return nil, merror.New(merror.NoSuchDatum)
 		}
 
 		// add the ellipse to the end of the list
 
-		ps.Args.Add(Pair{Key: "ellps", Value: datum.EllipseID})
+		ps.Args.Add(support.Pair{Key: "ellps", Value: datum.EllipseID})
 		ps.Args.AddList(datum.Definition)
 	}
 
 	_, ok = ps.Args.GetAsString("nadgrids")
 	if ok {
-		return nil, merror.New(NotYetSupported)
+		return nil, merror.New(merror.NotYetSupported)
 	}
 
 	_, ok = ps.Args.GetAsString("catalog")
 	if ok {
-		return nil, merror.New(NotYetSupported)
+		return nil, merror.New(merror.NotYetSupported)
 	}
 
 	values, ok := ps.Args.GetAsFloats("towgs84")
@@ -108,15 +111,15 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 			proj.DatumParams[6] = values[6]
 
 			// transform from arc seconds to radians
-			proj.DatumParams[3] = ConvertArcsecondsToRadians(proj.DatumParams[3])
-			proj.DatumParams[4] = ConvertArcsecondsToRadians(proj.DatumParams[4])
-			proj.DatumParams[5] = ConvertArcsecondsToRadians(proj.DatumParams[5])
+			proj.DatumParams[3] = support.ConvertArcsecondsToRadians(proj.DatumParams[3])
+			proj.DatumParams[4] = support.ConvertArcsecondsToRadians(proj.DatumParams[4])
+			proj.DatumParams[5] = support.ConvertArcsecondsToRadians(proj.DatumParams[5])
 
 			// transform from parts per million to scaling factor
 			proj.DatumParams[6] = (proj.DatumParams[6] / 1000000.0) + 1
 
 		} else {
-			return nil, merror.New(BadProjStringError)
+			return nil, merror.New(merror.BadProjStringError)
 		}
 
 		/* Note that pj_init() will later switch datum_type to

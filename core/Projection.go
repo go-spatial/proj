@@ -1,4 +1,4 @@
-package support
+package core
 
 // DatumType is the enum for the types of datums we support
 type DatumType string

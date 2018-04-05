@@ -29,7 +29,7 @@ func DMSToDD(input string) (float64, error) {
 
 	tokens := r.FindStringSubmatch(input)
 	if tokens == nil {
-		return 0.0, merror.New(ErrInvalidArg)
+		return 0.0, merror.New(merror.ErrInvalidArg)
 	}
 
 	sign := tokens[1]
@@ -80,5 +80,12 @@ func DMSToR(input string) (float64, error) {
 func DDToR(deg float64) float64 {
 	const degToRad = 0.017453292519943296
 	r := deg * degToRad
+	return r
+}
+
+// ConvertArcsecondsToRadians converts from arc secs to rads
+func ConvertArcsecondsToRadians(s float64) float64 {
+	// Pi/180/3600
+	r := s * 4.84813681109535993589914102357e-6
 	return r
 }

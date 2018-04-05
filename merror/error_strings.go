@@ -1,4 +1,4 @@
-package support
+package merror
 
 // All the errors
 var (

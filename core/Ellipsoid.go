@@ -1,9 +1,10 @@
-package support
+package core
 
 import (
 	"math"
 
 	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj4go/support"
 )
 
 func (ps *ProjString) processEllipsoid(P *Projection) error {
@@ -11,7 +12,7 @@ func (ps *ProjString) processEllipsoid(P *Projection) error {
 	var err error
 
 	/* Specifying R overrules everything */
-	if ps.Args.Contains("R") {
+	if ps.Args.ContainsKey("R") {
 		err = ellpsSize(ps, P)
 		if err != nil {
 			return err
@@ -85,16 +86,16 @@ func ellpsSize(ps *ProjString, P *Projection) error {
 		if aWasSet {
 			return nil
 		}
-		return merror.New(ErrMajorAxisNotGiven)
+		return merror.New(merror.ErrMajorAxisNotGiven)
 	}
 
 	P.DefSize = key
 	P.a = value
 	if P.a <= 0.0 {
-		return merror.New(ErrMajorAxisNotGiven)
+		return merror.New(merror.ErrMajorAxisNotGiven)
 	}
 	if P.a == math.MaxFloat64 {
-		return merror.New(ErrMajorAxisNotGiven)
+		return merror.New(merror.ErrMajorAxisNotGiven)
 	}
 
 	if key == "R" {
@@ -167,7 +168,7 @@ func pjCalcEllipsoidParams(P *Projection, a float64, es float64) error {
 
 	P.oneEs = 1. - P.es
 	if P.oneEs == 0. {
-		return merror.New(ErrEccentricityIsOne)
+		return merror.New(merror.ErrEccentricityIsOne)
 	}
 
 	P.rOneEs = 1. / P.oneEs
@@ -185,12 +186,12 @@ func ellpsEllps(ps *ProjString, P *Projection) error {
 
 	/* Then look up the right size and shape parameters from the builtin list */
 	if name == "" {
-		return merror.New(ErrInvalidArg)
+		return merror.New(merror.ErrInvalidArg)
 	}
 
 	ellps := pjFindEllps(name)
 	if ellps == nil {
-		return merror.New(ErrUnknownEllpParam)
+		return merror.New(merror.ErrUnknownEllpParam)
 	}
 
 	ellpsSize(ps, P)
@@ -240,10 +241,10 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "rf":
 		P.rf = foundValue
 		if P.rf == math.MaxFloat64 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.rf == 0 {
-			return merror.New(ErrRevFlatteningIsZero)
+			return merror.New(merror.ErrRevFlatteningIsZero)
 		}
 		P.f = 1 / P.rf
 		P.es = 2*P.f - P.f*P.f
@@ -252,10 +253,10 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "f":
 		P.f = foundValue
 		if P.f == math.MaxFloat64 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.f == 0 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		P.rf = 1 / P.f
 		P.es = 2*P.f - P.f*P.f
@@ -264,23 +265,23 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "es":
 		P.es = foundValue
 		if P.es == math.MaxFloat64 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.es == 1 {
-			return merror.New(ErrEccentricityIsOne)
+			return merror.New(merror.ErrEccentricityIsOne)
 		}
 
 	/* eccentricity, e */
 	case "e":
 		P.e = foundValue
 		if P.e == math.MaxFloat64 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.e == 0 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.e == 1 {
-			return merror.New(ErrEccentricityIsOne)
+			return merror.New(merror.ErrEccentricityIsOne)
 		}
 		P.es = P.e * P.e
 
@@ -288,10 +289,10 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	case "b":
 		P.b = foundValue
 		if P.b == math.MaxFloat64 {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.b == 0 {
-			return merror.New(ErrEccentricityIsOne)
+			return merror.New(merror.ErrEccentricityIsOne)
 		}
 		if P.b == P.a {
 			break
@@ -300,12 +301,12 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 		P.es = 2*P.f - P.f*P.f
 
 	default:
-		return merror.New(ErrInvalidArg)
+		return merror.New(merror.ErrInvalidArg)
 
 	}
 
 	if P.es < 0 {
-		return merror.New(ErrEsLessThanZero)
+		return merror.New(merror.ErrEsLessThanZero)
 	}
 
 	return nil
@@ -325,7 +326,7 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 	var key string
 	found := false
 	for _, key = range keys {
-		if ps.Args.Contains(key) {
+		if ps.Args.ContainsKey(key) {
 			found = true
 			break
 		}
@@ -357,7 +358,7 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 	/* R_h - a sphere with R = the harmonic mean of the ellipsoid */
 	case "R_h":
 		if P.a+P.b == 0 {
-			return merror.New(ErrToleranceCondition)
+			return merror.New(merror.ErrToleranceCondition)
 		}
 		P.a = (2 * P.a * P.b) / (P.a + P.b)
 
@@ -366,14 +367,14 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 	case "R_lat_a", "R_lat_g":
 		v, ok := ps.Args.GetAsString(key)
 		if !ok {
-			return merror.New(ErrInvalidArg)
+			return merror.New(merror.ErrInvalidArg)
 		}
-		t, err := DMSToR(v)
+		t, err := support.DMSToR(v)
 		if err != nil {
 			return err
 		}
-		if math.Abs(t) > mPiOverTwo {
-			return merror.New(ErrRefRadLargerThan90)
+		if math.Abs(t) > support.PiOverTwo {
+			return merror.New(merror.ErrRefRadLargerThan90)
 		}
 		t = math.Sin(t)
 		t = 1 - P.es*t*t
@@ -384,7 +385,7 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 		}
 
 	default:
-		return merror.New(ErrInvalidArg)
+		return merror.New(merror.ErrInvalidArg)
 
 	}
 

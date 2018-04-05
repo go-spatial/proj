@@ -96,3 +96,10 @@ func TestDMSToR(t *testing.T) {
 	assert.NoError(err)
 	assert.InDelta(math.Pi*0.75, r, 1e-6)
 }
+
+func TestArcseconds(t *testing.T) {
+	assert := assert.New(t)
+
+	r := support.ConvertArcsecondsToRadians(15.0 * 3600.0)
+	assert.InDelta(math.Pi/12.0, r, 1e-6)
+}
