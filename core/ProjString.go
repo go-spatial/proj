@@ -8,8 +8,9 @@ import (
 // ProjString represents a projection string, such as "+proj=utm +zone=11 +datum=WGS84"
 // TODO: we don't support the "pipeline" or "step" keywords
 type ProjString struct {
-	Source string
-	Args   *support.PairList
+	Source     string
+	Args       *support.PairList
+	Projection *Projection
 }
 
 // NewProjString returns a new ProjString object representing the given string
@@ -30,12 +31,22 @@ func NewProjString(source string) (*ProjString, error) {
 		return nil, err
 	}
 
-	proj, ok := ps.Args.GetAsString("proj")
-	if !ok || proj == "" {
+	projName, ok := ps.Args.GetAsString("proj")
+	if !ok || projName == "" {
 		return nil, merror.New(merror.ProjValueMissing)
 	}
 
-	_, err = ps.processDatum()
+	projection, err := NewProjection()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ps.locateConstructor(projection, projName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ps.processDatum(projection)
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +68,12 @@ func (ps *ProjString) processInit() error {
 	return nil
 }
 
-func (ps *ProjString) processDatum() (*Projection, error) {
+func (ps *ProjString) locateConstructor(proj *Projection, projName string) error {
 
-	proj, err := NewProjection()
-	if err != nil {
-		return nil, err
-	}
+	return nil
+}
+
+func (ps *ProjString) processDatum(proj *Projection) error {
 
 	proj.DatumType = DatumTypeUnknown
 
@@ -71,7 +82,7 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 
 		datum, ok := DatumTable[datumName]
 		if !ok {
-			return nil, merror.New(merror.NoSuchDatum)
+			return merror.New(merror.NoSuchDatum)
 		}
 
 		// add the ellipse to the end of the list
@@ -82,12 +93,12 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 
 	_, ok = ps.Args.GetAsString("nadgrids")
 	if ok {
-		return nil, merror.New(merror.NotYetSupported)
+		return merror.New(merror.NotYetSupported)
 	}
 
 	_, ok = ps.Args.GetAsString("catalog")
 	if ok {
-		return nil, merror.New(merror.NotYetSupported)
+		return merror.New(merror.NotYetSupported)
 	}
 
 	values, ok := ps.Args.GetAsFloats("towgs84")
@@ -119,12 +130,12 @@ func (ps *ProjString) processDatum() (*Projection, error) {
 			proj.DatumParams[6] = (proj.DatumParams[6] / 1000000.0) + 1
 
 		} else {
-			return nil, merror.New(merror.BadProjStringError)
+			return merror.New(merror.BadProjStringError)
 		}
 
 		/* Note that pj_init() will later switch datum_type to
 		   PJD_WGS84 if shifts are all zero, and ellipsoid is WGS84 or GRS80 */
 	}
 
-	return proj, nil
+	return nil
 }

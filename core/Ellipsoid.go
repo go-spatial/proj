@@ -5,9 +5,71 @@ import (
 
 	"github.com/go-spatial/proj4go/merror"
 	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj4go/tables"
 )
 
-func (ps *ProjString) processEllipsoid(P *Projection) error {
+// Ellipsoid represents an ellipsoid
+type Ellipsoid struct {
+	ID    string
+	Major string
+	Ell   string
+	Name  string
+
+	// ELLIPSOID
+
+	DefSize           string
+	DefShape          string
+	DefSpherification string
+	DefEllps          string
+
+	/* The linear parameters */
+
+	a  float64 /* semimajor axis (radius if eccentricity==0) */
+	b  float64 /* semiminor axis */
+	ra float64 /* 1/a */
+	rb float64 /* 1/b */
+
+	/* The eccentricities */
+
+	alpha  float64 /* angular eccentricity */
+	e      float64 /* first  eccentricity */
+	es     float64 /* first  eccentricity squared */
+	e2     float64 /* second eccentricity */
+	e2s    float64 /* second eccentricity squared */
+	e3     float64 /* third  eccentricity */
+	e3s    float64 /* third  eccentricity squared */
+	oneEs  float64 /* 1 - e^2 */
+	rOneEs float64 /* 1/one_es */
+
+	/* The flattenings */
+	f   float64 /* first  flattening */
+	f2  float64 /* second flattening */
+	n   float64 /* third  flattening */
+	rf  float64 /* 1/f  */
+	rf2 float64 /* 1/f2 */
+	rn  float64 /* 1/n  */
+}
+
+// EllipsoidTable is the global list of all the known datums
+var EllipsoidTable map[string]*Ellipsoid
+
+func init() {
+
+	EllipsoidTable = map[string]*Ellipsoid{}
+
+	for _, raw := range tables.RawEllipsoids {
+		d := &Ellipsoid{
+			ID:    raw.ID,
+			Major: raw.Major,
+			Ell:   raw.Ell,
+			Name:  raw.Name,
+		}
+
+		EllipsoidTable[d.ID] = d
+	}
+}
+
+func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
 
 	var err error
 
@@ -66,50 +128,7 @@ func (ps *ProjString) processEllipsoid(P *Projection) error {
 	return nil
 }
 
-func ellpsSize(ps *ProjString, P *Projection) error {
-
-	aWasSet := false
-
-	/* A size parameter *must* be given, but may have been given as ellps prior */
-	if P.a != 0.0 {
-		aWasSet = true
-	}
-
-	/* Check which size key is specified */
-	key := "R"
-	value, ok := ps.Args.GetAsFloat("R")
-	if !ok {
-		key = "a"
-		value, ok = ps.Args.GetAsFloat("a")
-	}
-	if !ok {
-		if aWasSet {
-			return nil
-		}
-		return merror.New(merror.ErrMajorAxisNotGiven)
-	}
-
-	P.DefSize = key
-	P.a = value
-	if P.a <= 0.0 {
-		return merror.New(merror.ErrMajorAxisNotGiven)
-	}
-	if P.a == math.MaxFloat64 {
-		return merror.New(merror.ErrMajorAxisNotGiven)
-	}
-
-	if key == "R" {
-		P.es = 0
-		P.f = 0
-		P.e = 0
-		P.rf = 0
-		P.b = P.a
-	}
-
-	return nil
-}
-
-func pjCalcEllipsoidParams(P *Projection, a float64, es float64) error {
+func pjCalcEllipsoidParams(P *Ellipsoid, a float64, es float64) error {
 
 	P.a = a
 	P.es = es
@@ -176,7 +195,7 @@ func pjCalcEllipsoidParams(P *Projection, a float64, es float64) error {
 	return nil
 }
 
-func ellpsEllps(ps *ProjString, P *Projection) error {
+func ellpsEllps(ps *ProjString, P *Ellipsoid) error {
 
 	/* Sail home if ellps=xxx is not specified */
 	name, ok := ps.Args.GetAsString("ellps")
@@ -189,18 +208,61 @@ func ellpsEllps(ps *ProjString, P *Projection) error {
 		return merror.New(merror.ErrInvalidArg)
 	}
 
-	ellps := pjFindEllps(name)
-	if ellps == nil {
+	ellps, ok := EllipsoidTable[name]
+	if !ok {
 		return merror.New(merror.ErrUnknownEllpParam)
 	}
 
-	ellpsSize(ps, P)
-	ellpsShape(ps, P)
+	ellpsSize(ps, ellps)
+	ellpsShape(ps, ellps)
 
 	return nil
 }
 
-func ellpsShape(ps *ProjString, P *Projection) error {
+func ellpsSize(ps *ProjString, P *Ellipsoid) error {
+
+	aWasSet := false
+
+	/* A size parameter *must* be given, but may have been given as ellps prior */
+	if P.a != 0.0 {
+		aWasSet = true
+	}
+
+	/* Check which size key is specified */
+	key := "R"
+	value, ok := ps.Args.GetAsFloat("R")
+	if !ok {
+		key = "a"
+		value, ok = ps.Args.GetAsFloat("a")
+	}
+	if !ok {
+		if aWasSet {
+			return nil
+		}
+		return merror.New(merror.ErrMajorAxisNotGiven)
+	}
+
+	P.DefSize = key
+	P.a = value
+	if P.a <= 0.0 {
+		return merror.New(merror.ErrMajorAxisNotGiven)
+	}
+	if P.a == math.MaxFloat64 {
+		return merror.New(merror.ErrMajorAxisNotGiven)
+	}
+
+	if key == "R" {
+		P.es = 0
+		P.f = 0
+		P.e = 0
+		P.rf = 0
+		P.b = P.a
+	}
+
+	return nil
+}
+
+func ellpsShape(ps *ProjString, P *Ellipsoid) error {
 
 	keys := []string{"rf", "f", "es", "e", "b"}
 
@@ -312,7 +374,7 @@ func ellpsShape(ps *ProjString, P *Projection) error {
 	return nil
 }
 
-func ellpsSpherification(ps *ProjString, P *Projection) error {
+func ellpsSpherification(ps *ProjString, P *Ellipsoid) error {
 
 	/* series coefficients for calculating ellipsoid-equivalent spheres */
 	const SIXTH = 1 / 6.
@@ -397,77 +459,5 @@ func ellpsSpherification(ps *ProjString, P *Projection) error {
 	P.b = P.a
 	pjCalcEllipsoidParams(P, P.a, 0)
 
-	return nil
-}
-
-//-----------------------------------------------------------------
-
-// Ellipsoid represents the parameters of an ellipsoid
-type Ellipsoid struct {
-	id    string
-	major string
-	ell   string
-	name  string
-}
-
-// EllipsoidTable is an array of Ellipsoid objects
-type EllipsoidTable []*Ellipsoid
-
-// Ellipsoids is the global table of ellipsoids
-var Ellipsoids = &EllipsoidTable{
-	{"MERIT", "a=6378137.0", "rf=298.257", "MERIT 1983"},
-	{"SGS85", "a=6378136.0", "rf=298.257", "Soviet Geodetic System 85"},
-	{"GRS80", "a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)"},
-	{"IAU76", "a=6378140.0", "rf=298.257", "IAU 1976"},
-	{"airy", "a=6377563.396", "b=6356256.910", "Airy 1830"},
-	{"APL4.9", "a=6378137.0.", "rf=298.25", "Appl. Physics. 1965"},
-	{"NWL9D", "a=6378145.0.", "rf=298.25", "Naval Weapons Lab., 1965"},
-	{"mod_airy", "a=6377340.189", "b=6356034.446", "Modified Airy"},
-	{"andrae", "a=6377104.43", "rf=300.0", "Andrae 1876 (Den., Iclnd.)"},
-	{"danish", "a=6377019.2563", "rf=300.0", "Andrae 1876 (Denmark, Iceland)"},
-	{"aust_SA", "a=6378160.0", "rf=298.25", "Australian Natl & S. Amer. 1969"},
-	{"GRS67", "a=6378160.0", "rf=298.2471674270", "GRS 67(IUGG 1967)"},
-	{"GSK2011", "a=6378136.5", "rf=298.2564151", "GSK-2011"},
-	{"bessel", "a=6377397.155", "rf=299.1528128", "Bessel 1841"},
-	{"bess_nam", "a=6377483.865", "rf=299.1528128", "Bessel 1841 (Namibia)"},
-	{"clrk66", "a=6378206.4", "b=6356583.8", "Clarke 1866"},
-	{"clrk80", "a=6378249.145", "rf=293.4663", "Clarke 1880 mod."},
-	{"clrk80ign", "a=6378249.2", "rf=293.4660212936269", "Clarke 1880 (IGN)."},
-	{"CPM", "a=6375738.7", "rf=334.29", "Comm. des Poids et Mesures 1799"},
-	{"delmbr", "a=6376428.", "rf=311.5", "Delambre 1810 (Belgium)"},
-	{"engelis", "a=6378136.05", "rf=298.2566", "Engelis 1985"},
-	{"evrst30", "a=6377276.345", "rf=300.8017", "Everest 1830"},
-	{"evrst48", "a=6377304.063", "rf=300.8017", "Everest 1948"},
-	{"evrst56", "a=6377301.243", "rf=300.8017", "Everest 1956"},
-	{"evrst69", "a=6377295.664", "rf=300.8017", "Everest 1969"},
-	{"evrstSS", "a=6377298.556", "rf=300.8017", "Everest (Sabah & Sarawak)"},
-	{"fschr60", "a=6378166.", "rf=298.3", "Fischer (Mercury Datum) 1960"},
-	{"fschr60m", "a=6378155.", "rf=298.3", "Modified Fischer 1960"},
-	{"fschr68", "a=6378150.", "rf=298.3", "Fischer 1968"},
-	{"helmert", "a=6378200.", "rf=298.3", "Helmert 1906"},
-	{"hough", "a=6378270.0", "rf=297.", "Hough"},
-	{"intl", "a=6378388.0", "rf=297.", "International 1909 (Hayford)"},
-	{"krass", "a=6378245.0", "rf=298.3", "Krassovsky, 1942"},
-	{"kaula", "a=6378163.", "rf=298.24", "Kaula 1961"},
-	{"lerch", "a=6378139.", "rf=298.257", "Lerch 1979"},
-	{"mprts", "a=6397300.", "rf=191.", "Maupertius 1738"},
-	{"new_intl", "a=6378157.5", "b=6356772.2", "New International 1967"},
-	{"plessis", "a=6376523.", "b=6355863.", "Plessis 1817 (France)"},
-	{"PZ90", "a=6378136.0", "rf=298.25784", "PZ-90"},
-	{"SEasia", "a=6378155.0", "b=6356773.3205", "Southeast Asia"},
-	{"walbeck", "a=6376896.0", "b=6355834.8467", "Walbeck"},
-	{"WGS60", "a=6378165.0", "rf=298.3", "WGS 60"},
-	{"WGS66", "a=6378145.0", "rf=298.25", "WGS 66"},
-	{"WGS72", "a=6378135.0", "rf=298.26", "WGS 72"},
-	{"WGS84", "a=6378137.0", "rf=298.257223563", "WGS 84"},
-	{"sphere", "a=6370997.0", "b=6370997.0", "Normal Sphere (r=6370997)"},
-}
-
-func pjFindEllps(name string) *Ellipsoid {
-	for _, e := range *Ellipsoids {
-		if name == e.id {
-			return e
-		}
-	}
 	return nil
 }
