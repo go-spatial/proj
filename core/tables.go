@@ -14,8 +14,8 @@ var EllipsoidTable map[string]*Ellipsoid
 // PrimeMeridianTable is the global list of all the known datums
 var PrimeMeridianTable map[string]*PrimeMeridian
 
-// ProjectionTable is the global list of all the known projections
-var ProjectionTable map[string]*ProjectionInfo
+// OperationInfoTable is the global list of all the known operations
+var OperationInfoTable = map[string]*OperationInfo{}
 
 func init() {
 

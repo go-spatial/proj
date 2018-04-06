@@ -55,11 +55,13 @@ func TestPairListGets(t *testing.T) {
 	p1 := support.Pair{Key: "k1", Value: "v1"}
 	p2 := support.Pair{Key: "k2", Value: "2.2"}
 	p3 := support.Pair{Key: "k3", Value: "3.0,3.1,3.2"}
+	p4 := support.Pair{Key: "k4", Value: "678"}
 
 	pl := support.NewPairList()
 	pl.Add(p1)
 	pl.Add(p2)
 	pl.Add(p3)
+	pl.Add(p4)
 
 	vs, ok := pl.GetAsString("k99")
 	assert.False(ok)
@@ -82,6 +84,10 @@ func TestPairListGets(t *testing.T) {
 	vfs, ok = pl.GetAsFloats("k3")
 	assert.True(ok)
 	assert.Equal([]float64{3.0, 3.1, 3.2}, vfs)
+
+	vi, ok := pl.GetAsInt("k4")
+	assert.True(ok)
+	assert.Equal(678, vi)
 }
 
 func TestPairListParsing(t *testing.T) {

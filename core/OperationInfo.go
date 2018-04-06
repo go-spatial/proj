@@ -1,17 +1,17 @@
 package core
 
 // ForwardTransform is the function type of the forward operations
-type ForwardTransform interface{}
+type ForwardTransform func(*Operation, interface{}) (interface{}, error)
 
 // InverseTransform is the function type of the inverse operations
-type InverseTransform interface{}
+type InverseTransform func(*Operation, interface{}) (interface{}, error)
 
 // SetupTransform is the function type of the setup/init fuction for this operation type
-type SetupTransform func() interface{}
+type SetupTransform func(*Operation) error
 
-// ProjectionInfo stores the information about a particular kind of
-// projection. It is populated from the "projections" package.
-type ProjectionInfo struct {
+// OperationInfo stores the information about a particular kind of
+// operation. It is populated from the "projections" package.
+type OperationInfo struct {
 	ID           string
 	Description  string
 	Description2 string
@@ -20,8 +20,8 @@ type ProjectionInfo struct {
 	Setup        SetupTransform
 }
 
-// RegisterProjection adds a ProjectionInfo entry to the ProjectionTable
-func RegisterProjection(
+// RegisterOperation adds an OperationInfo entry to the OperationInfoTable
+func RegisterOperation(
 	id string,
 	description string,
 	description2 string,
@@ -31,7 +31,7 @@ func RegisterProjection(
 	inverse InverseTransform,
 	setup SetupTransform,
 ) {
-	pi := &ProjectionInfo{
+	pi := &OperationInfo{
 		ID:           id,
 		Description:  description,
 		Description2: description2,
@@ -40,9 +40,9 @@ func RegisterProjection(
 		Setup:        setup,
 	}
 
-	_, ok := ProjectionTable[id]
-	if !ok {
+	_, ok := OperationInfoTable[id]
+	if ok {
 		panic(99)
 	}
-	ProjectionTable[id] = pi
+	OperationInfoTable[id] = pi
 }

@@ -1,23 +1,24 @@
-package projections
+package operations
 
 import (
 	"math"
 
 	"github.com/go-spatial/proj4go/core"
 	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj4go/support"
 )
 
 func init() {
-	core.RegisterProjection("utm",
+	core.RegisterOperation("utm",
 		"Universal Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tzone= south",
 		core.CoordTypeLP, core.CoordTypeXY,
-		UTMForward, UTMInverse, UTMSetup)
-	core.RegisterProjection("etmerc",
+		etmercForward, etmercInverse, utmSetup)
+	core.RegisterOperation("etmerc",
 		"Extended Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tlat_ts=(0)\nlat_0=(0)",
 		core.CoordTypeLP, core.CoordTypeXY,
-		ETMercForward, ETMercInverse, ETMercSetup)
+		etmercForward, etmercInverse, etmercSetup)
 }
 
 type etmercOpaque struct {
@@ -34,25 +35,18 @@ const etmercOrder = 6
 //---------------------------------------------------------------------
 
 // UTMSetup operation
-func UTMSetup() interface{} {
+func UTMSetup(*core.Operation) error {
 	return nil
 }
 
 // UTMForward operation
-func UTMForward(*core.Projection, interface{}) (interface{}, error) {
+func UTMForward(*core.Operation, interface{}) (interface{}, error) {
 	return nil, nil
 }
 
 // UTMInverse operation
-func UTMInverse(*core.Projection, interface{}) (interface{}, error) {
+func UTMInverse(*core.Operation, interface{}) (interface{}, error) {
 	return nil, nil
-}
-
-//---------------------------------------------------------------------
-
-// ETMercSetup operation
-func ETMercSetup() interface{} {
-	return nil
 }
 
 //---------------------------------------------------------------------
@@ -72,7 +66,7 @@ func log1py(x float64) float64 { /* Compute log(1+x) accurately */
 
 func asinhy(x float64) float64 { /* Compute asinh(x) accurately */
 	y := math.Abs(x) /* Enforce odd parity */
-	y = log1py(y * (1 + y/(hypot(1.0, y)+1)))
+	y = log1py(y * (1 + y/(support.Hypot(1.0, y)+1)))
 	if x < 0 {
 		return -y
 	}
@@ -162,8 +156,10 @@ func clens(a []float64, lenA int, argR float64) float64 {
 }
 
 // ETMercForward operation -- Ellipsoidal, forward
-func ETMercForward(P *core.Projection, lp core.CoordLP) core.CoordXY {
-	xy := core.CoordXY{X: 0.0, Y: 0.0}
+func etmercForward(P *core.Operation, xinput interface{}) (interface{}, error) {
+	lp := xinput.(*core.CoordLP)
+
+	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 	var Q = P.Q.(*etmercOpaque)
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
 	Cn := lp.Phi
@@ -176,7 +172,7 @@ func ETMercForward(P *core.Projection, lp core.CoordLP) core.CoordXY {
 	sinCe, cosCe = math.Sincos(Ce)
 
 	Cn = math.Atan2(sinCn, cosCe*cosCn)
-	Ce = math.Atan2(sinCe*cosCn, hypot(sinCn, cosCn*cosCe))
+	Ce = math.Atan2(sinCe*cosCn, support.Hypot(sinCn, cosCn*cosCe))
 
 	/* compl. sph. N, E -> ell. norm. N, E */
 	Ce = asinhy(math.Tan(Ce)) /* Replaces: Ce  = log(tan(FORTPI + Ce*0.5)); */
@@ -189,12 +185,14 @@ func ETMercForward(P *core.Projection, lp core.CoordLP) core.CoordXY {
 		xy.X = math.MaxFloat64
 		xy.Y = math.MaxFloat64
 	}
-	return xy
+	return xy, nil
 }
 
 // ETMercInverse operation (Ellipsoidal, inverse)
-func ETMercInverse(P *core.Projection, xy core.CoordXY) core.CoordLP {
-	lp := core.CoordLP{Lam: 0.0, Phi: 0.0}
+func etmercInverse(P *core.Operation, xinput interface{}) (interface{}, error) {
+	xy := xinput.(*core.CoordXY)
+
+	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 	Q := P.Q.(*etmercOpaque)
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
 	Cn := xy.Y
@@ -213,7 +211,7 @@ func ETMercInverse(P *core.Projection, xy core.CoordXY) core.CoordLP {
 		sinCn, cosCn = math.Sincos(Cn)
 		sinCe, cosCe = math.Sincos(Ce)
 		Ce = math.Atan2(sinCe, cosCe*cosCn)
-		Cn = math.Atan2(sinCn*cosCe, hypot(sinCe, cosCe*cosCn))
+		Cn = math.Atan2(sinCn*cosCe, support.Hypot(sinCe, cosCe*cosCn))
 		/* Gaussian LAT, LNG -> ell. LAT, LNG */
 		lp.Phi = gatg(Q.cgb[:], etmercOrder, Cn)
 		lp.Lam = Ce
@@ -221,11 +219,11 @@ func ETMercInverse(P *core.Projection, xy core.CoordXY) core.CoordLP {
 		lp.Phi = math.MaxFloat64
 		lp.Lam = math.MaxFloat64
 	}
-	return lp
+	return lp, nil
 }
 
 /* general initialization */
-func setup(P *core.Projection) error {
+func localSetup(P *core.Operation) error {
 	var f, n, np, Z float64
 
 	Q := &etmercOpaque{}
@@ -312,7 +310,50 @@ func setup(P *core.Projection) error {
 	/* Origin northing minus true northing at the origin latitude */
 	/* i.e. true northing = N - P->Zb                         */
 	Q.Zb = -Q.Qn * (Z + clens(Q.gtu[:], etmercOrder, 2*Z))
-	P.inv = e_inverse
-	P.fwd = e_forward
-	return P
+
+	return nil
+}
+
+func etmercSetup(op *core.Operation) error {
+
+	return localSetup(op)
+}
+
+/* utm uses etmerc for the underlying projection */
+
+func utmSetup(op *core.Operation) error {
+
+	if op.E.Es == 0.0 {
+		return merror.New(merror.ErrEllipsoidUseRequired)
+	}
+	if op.Lam0 < -1000.0 || op.Lam0 > 1000.0 {
+		return merror.New(merror.ErrInvalidUTMZone)
+	}
+
+	op.Y0 = 0.0
+	if op.ProjString.Args.ContainsKey("bsouth)") {
+		op.Y0 = 10000000.0
+	}
+	op.X0 = 500000.0
+
+	zone, ok := op.ProjString.Args.GetAsInt("tzone)") /* zone input ? */
+	if ok {
+		if zone > 0 && zone <= 60 {
+			zone--
+		} else {
+			return merror.New(merror.ErrInvalidUTMZone)
+		}
+	} else { /* nearest central meridian input */
+		zone = (int)(math.Floor((support.Adjlon(op.Lam0) + support.Pi) * 30. / support.Pi))
+		if zone < 0 {
+			zone = 0
+		} else if zone >= 60 {
+			zone = 59
+		}
+	}
+	op.Lam0 = (float64(zone)+0.5)*support.Pi/30.0 - support.Pi
+	op.K0 = 0.9996
+	op.Phi0 = 0.0
+
+	return localSetup(op)
 }

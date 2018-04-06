@@ -137,6 +137,22 @@ func (pl *PairList) GetAsString(key string) (string, bool) {
 	return pl.get(key)
 }
 
+// GetAsInt returns the value of the first occurrence of the key, as an int
+func (pl *PairList) GetAsInt(key string) (int, bool) {
+
+	value, ok := pl.get(key)
+	if !ok {
+		return 0, false
+	}
+
+	i64, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return 0, false
+	}
+
+	return int(i64), true
+}
+
 // GetAsFloat returns the value of the first occurrence of the key, as a float64
 func (pl *PairList) GetAsFloat(key string) (float64, bool) {
 

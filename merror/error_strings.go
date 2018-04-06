@@ -16,4 +16,5 @@ var (
 	ErrRefRadLargerThan90   = "ERR_REF_RAD_LARGER_THAN_90"
 	ErrInvalidDMS           = "ErrInvalidDMS"
 	ErrEllipsoidUseRequired = "ERR_ELLIPSOID_USE_REQUIRED"
+	ErrInvalidUTMZone       = "ERR_INVALID_UTM_ZONE"
 )

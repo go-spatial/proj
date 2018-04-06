@@ -7,12 +7,11 @@ import (
 	"github.com/go-spatial/proj4go/support"
 )
 
-// ProjString represents a projection string, such as "+proj=utm +zone=11 +datum=WGS84"
+// ProjString represents a "projection string", such as "+proj=utm +zone=11 +datum=WGS84"
 // TODO: we don't support the "pipeline" or "step" keywords
 type ProjString struct {
-	Source     string
-	Args       *support.PairList
-	Projection *Projection
+	Source string
+	Args   *support.PairList
 }
 
 // NewProjString returns a new ProjString object representing the given string
@@ -28,27 +27,7 @@ func NewProjString(source string) (*ProjString, error) {
 
 	ps.Args = pairs
 
-	err = ps.processInit()
-	if err != nil {
-		return nil, err
-	}
-
-	projName, ok := ps.Args.GetAsString("proj")
-	if !ok || projName == "" {
-		return nil, merror.New(merror.ProjValueMissing)
-	}
-
-	projection, err := NewProjection()
-	if err != nil {
-		return nil, err
-	}
-
-	err = ps.locateConstructor(projection, projName)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ps.processDatum(projection)
+	err = ps.validate()
 	if err != nil {
 		return nil, err
 	}
@@ -65,87 +44,22 @@ func (ps *ProjString) String() string {
 	return string(b)
 }
 
-func (ps *ProjString) processInit() error {
+func (ps *ProjString) validate() error {
 
-	numInit := ps.Args.CountKey("init")
-	if numInit > 1 {
+	// TODO: we don't support +init or +pipeline
+	if ps.Args.CountKey("init") > 0 {
+		return merror.New(merror.BadProjStringError)
+	}
+	if ps.Args.CountKey("pipeline") > 0 {
 		return merror.New(merror.BadProjStringError)
 	}
 
-	// TODO: support "init" expansion
-	if numInit != 0 {
-		return merror.New(merror.NotYetSupported)
+	if ps.Args.CountKey("proj") != 1 {
+		return merror.New(merror.BadProjStringError)
 	}
-	return nil
-}
-
-func (ps *ProjString) locateConstructor(proj *Projection, projName string) error {
-
-	return nil
-}
-
-func (ps *ProjString) processDatum(proj *Projection) error {
-
-	proj.DatumType = DatumTypeUnknown
-
-	datumName, ok := ps.Args.GetAsString("datum")
-	if ok {
-
-		datum, ok := DatumTable[datumName]
-		if !ok {
-			return merror.New(merror.NoSuchDatum)
-		}
-
-		// add the ellipse to the end of the list
-
-		ps.Args.Add(support.Pair{Key: "ellps", Value: datum.EllipseID})
-		ps.Args.AddList(datum.Definition)
-	}
-
-	_, ok = ps.Args.GetAsString("nadgrids")
-	if ok {
-		return merror.New(merror.NotYetSupported)
-	}
-
-	_, ok = ps.Args.GetAsString("catalog")
-	if ok {
-		return merror.New(merror.NotYetSupported)
-	}
-
-	values, ok := ps.Args.GetAsFloats("towgs84")
-	if ok {
-		if len(values) == 3 {
-			proj.DatumType = DatumType3Param
-
-			proj.DatumParams[0] = values[0]
-			proj.DatumParams[1] = values[1]
-			proj.DatumParams[2] = values[2]
-
-		} else if len(values) == 7 {
-			proj.DatumType = DatumType7Param
-
-			proj.DatumParams[0] = values[0]
-			proj.DatumParams[1] = values[1]
-			proj.DatumParams[2] = values[2]
-			proj.DatumParams[3] = values[3]
-			proj.DatumParams[4] = values[4]
-			proj.DatumParams[5] = values[5]
-			proj.DatumParams[6] = values[6]
-
-			// transform from arc seconds to radians
-			proj.DatumParams[3] = support.ConvertArcsecondsToRadians(proj.DatumParams[3])
-			proj.DatumParams[4] = support.ConvertArcsecondsToRadians(proj.DatumParams[4])
-			proj.DatumParams[5] = support.ConvertArcsecondsToRadians(proj.DatumParams[5])
-
-			// transform from parts per million to scaling factor
-			proj.DatumParams[6] = (proj.DatumParams[6] / 1000000.0) + 1
-
-		} else {
-			return merror.New(merror.BadProjStringError)
-		}
-
-		/* Note that pj_init() will later switch datum_type to
-		   PJD_WGS84 if shifts are all zero, and ellipsoid is WGS84 or GRS80 */
+	projName, ok := ps.Args.GetAsString("proj")
+	if !ok || projName == "" {
+		return merror.New(merror.ProjValueMissing)
 	}
 
 	return nil
