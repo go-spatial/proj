@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+
 	"github.com/go-spatial/proj4go/merror"
 	"github.com/go-spatial/proj4go/support"
 )
@@ -52,6 +54,15 @@ func NewProjString(source string) (*ProjString, error) {
 	}
 
 	return ps, nil
+}
+
+func (ps *ProjString) String() string {
+	b, err := json.MarshalIndent(ps, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+
+	return string(b)
 }
 
 func (ps *ProjString) processInit() error {

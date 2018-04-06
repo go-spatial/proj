@@ -1,11 +1,11 @@
 package core
 
 import (
+	"encoding/json"
 	"math"
 
 	"github.com/go-spatial/proj4go/merror"
 	"github.com/go-spatial/proj4go/support"
-	"github.com/go-spatial/proj4go/tables"
 )
 
 // Ellipsoid represents an ellipsoid
@@ -24,49 +24,44 @@ type Ellipsoid struct {
 
 	/* The linear parameters */
 
-	a  float64 /* semimajor axis (radius if eccentricity==0) */
-	b  float64 /* semiminor axis */
-	ra float64 /* 1/a */
-	rb float64 /* 1/b */
+	A  float64 /* semimajor axis (radius if eccentricity==0) */
+	B  float64 /* semiminor axis */
+	Ra float64 /* 1/a */
+	Rb float64 /* 1/b */
 
 	/* The eccentricities */
 
-	alpha  float64 /* angular eccentricity */
-	e      float64 /* first  eccentricity */
-	es     float64 /* first  eccentricity squared */
-	e2     float64 /* second eccentricity */
-	e2s    float64 /* second eccentricity squared */
-	e3     float64 /* third  eccentricity */
-	e3s    float64 /* third  eccentricity squared */
-	oneEs  float64 /* 1 - e^2 */
-	rOneEs float64 /* 1/one_es */
+	Alpha  float64 /* angular eccentricity */
+	E      float64 /* first  eccentricity */
+	Es     float64 /* first  eccentricity squared */
+	E2     float64 /* second eccentricity */
+	E2s    float64 /* second eccentricity squared */
+	E3     float64 /* third  eccentricity */
+	E3s    float64 /* third  eccentricity squared */
+	OneEs  float64 /* 1 - e^2 */
+	ROneEs float64 /* 1/one_es */
 
 	/* The flattenings */
-	f   float64 /* first  flattening */
-	f2  float64 /* second flattening */
-	n   float64 /* third  flattening */
-	rf  float64 /* 1/f  */
-	rf2 float64 /* 1/f2 */
-	rn  float64 /* 1/n  */
+	F   float64 /* first  flattening */
+	F2  float64 /* second flattening */
+	N   float64 /* third  flattening */
+	Rf  float64 /* 1/f  */
+	Rf2 float64 /* 1/f2 */
+	Rn  float64 /* 1/n  */
+
+	/* This one's for GRS80 */
+	J float64 /* "Dynamic form factor" */
+
+	EsOrig, AOrig float64 /* es and a before any +proj related adjustment */
 }
 
-// EllipsoidTable is the global list of all the known datums
-var EllipsoidTable map[string]*Ellipsoid
-
-func init() {
-
-	EllipsoidTable = map[string]*Ellipsoid{}
-
-	for _, raw := range tables.RawEllipsoids {
-		d := &Ellipsoid{
-			ID:    raw.ID,
-			Major: raw.Major,
-			Ell:   raw.Ell,
-			Name:  raw.Name,
-		}
-
-		EllipsoidTable[d.ID] = d
+func (e *Ellipsoid) String() string {
+	b, err := json.MarshalIndent(e, "", "    ")
+	if err != nil {
+		panic(err)
 	}
+
+	return string(b)
 }
 
 func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
@@ -79,7 +74,7 @@ func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
 		if err != nil {
 			return err
 		}
-		err = pjCalcEllipsoidParams(P, P.a, 0)
+		err = pjCalcEllipsoidParams(P, P.A, 0)
 		if err != nil {
 			return err
 		}
@@ -105,7 +100,7 @@ func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
 	}
 
 	/* When we're done with it, we compute all related ellipsoid parameters */
-	err = pjCalcEllipsoidParams(P, P.a, P.es)
+	err = pjCalcEllipsoidParams(P, P.A, P.Es)
 	if err != nil {
 		return nil
 	}
@@ -130,67 +125,67 @@ func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
 
 func pjCalcEllipsoidParams(P *Ellipsoid, a float64, es float64) error {
 
-	P.a = a
-	P.es = es
+	P.A = a
+	P.Es = es
 
 	/* Compute some ancillary ellipsoidal parameters */
-	if P.e == 0 {
-		P.e = math.Sqrt(P.es) /* eccentricity */
+	if P.E == 0 {
+		P.E = math.Sqrt(P.Es) /* eccentricity */
 	}
-	P.alpha = math.Asin(P.e) /* angular eccentricity */
+	P.Alpha = math.Asin(P.E) /* angular eccentricity */
 
 	/* second eccentricity */
-	P.e2 = math.Tan(P.alpha)
-	P.e2s = P.e2 * P.e2
+	P.E2 = math.Tan(P.Alpha)
+	P.E2s = P.E2 * P.E2
 
 	/* third eccentricity */
-	if 0 != P.alpha {
-		P.e3 = math.Sin(P.alpha) / math.Sqrt(2-math.Sin(P.alpha)*math.Sin(P.alpha))
+	if 0 != P.Alpha {
+		P.E3 = math.Sin(P.Alpha) / math.Sqrt(2-math.Sin(P.Alpha)*math.Sin(P.Alpha))
 	} else {
-		P.e3 = 0
+		P.E3 = 0
 	}
 
-	P.e3s = P.e3 * P.e3
+	P.E3s = P.E3 * P.E3
 
 	/* flattening */
-	if 0 == P.f {
-		P.f = 1 - math.Cos(P.alpha) /* = 1 - sqrt (1 - PIN->es); */
+	if 0 == P.F {
+		P.F = 1 - math.Cos(P.Alpha) /* = 1 - sqrt (1 - PIN->es); */
 	}
-	P.rf = math.MaxFloat64
-	if P.f != 0.0 {
-		P.rf = 1.0 / P.f
+	P.Rf = math.MaxFloat64
+	if P.F != 0.0 {
+		P.Rf = 1.0 / P.F
 	}
 
 	/* second flattening */
-	P.f2 = 0
-	if math.Cos(P.alpha) != 0 {
-		P.f2 = 1/math.Cos(P.alpha) - 1
+	P.F2 = 0
+	if math.Cos(P.Alpha) != 0 {
+		P.F2 = 1/math.Cos(P.Alpha) - 1
 	}
-	P.rf2 = math.MaxFloat64
-	if P.f2 != 0.0 {
-		P.rf2 = 1 / P.f2
+	P.Rf2 = math.MaxFloat64
+	if P.F2 != 0.0 {
+		P.Rf2 = 1 / P.F2
 	}
 
 	/* third flattening */
-	P.n = math.Pow(math.Tan(P.alpha/2), 2)
-	P.rn = math.MaxFloat64
-	if P.n != 0.0 {
-		P.rn = 1 / P.n
+	P.N = math.Pow(math.Tan(P.Alpha/2), 2)
+	P.Rn = math.MaxFloat64
+	if P.N != 0.0 {
+		P.Rn = 1 / P.N
 	}
 
 	/* ...and a few more */
-	if 0 == P.b {
-		P.b = (1 - P.f) * P.a
+	if 0 == P.B {
+		P.B = (1 - P.F) * P.A
 	}
-	P.rb = 1. / P.b
-	P.ra = 1. / P.a
+	P.Rb = 1. / P.B
+	P.Ra = 1. / P.A
 
-	P.oneEs = 1. - P.es
-	if P.oneEs == 0. {
+	P.OneEs = 1. - P.Es
+	if P.OneEs == 0. {
 		return merror.New(merror.ErrEccentricityIsOne)
 	}
 
-	P.rOneEs = 1. / P.oneEs
+	P.ROneEs = 1. / P.OneEs
 
 	return nil
 }
@@ -224,7 +219,7 @@ func ellpsSize(ps *ProjString, P *Ellipsoid) error {
 	aWasSet := false
 
 	/* A size parameter *must* be given, but may have been given as ellps prior */
-	if P.a != 0.0 {
+	if P.A != 0.0 {
 		aWasSet = true
 	}
 
@@ -243,20 +238,20 @@ func ellpsSize(ps *ProjString, P *Ellipsoid) error {
 	}
 
 	P.DefSize = key
-	P.a = value
-	if P.a <= 0.0 {
+	P.A = value
+	if P.A <= 0.0 {
 		return merror.New(merror.ErrMajorAxisNotGiven)
 	}
-	if P.a == math.MaxFloat64 {
+	if P.A == math.MaxFloat64 {
 		return merror.New(merror.ErrMajorAxisNotGiven)
 	}
 
 	if key == "R" {
-		P.es = 0
-		P.f = 0
-		P.e = 0
-		P.rf = 0
-		P.b = P.a
+		P.Es = 0
+		P.F = 0
+		P.E = 0
+		P.Rf = 0
+		P.B = P.A
 	}
 
 	return nil
@@ -281,93 +276,93 @@ func ellpsShape(ps *ProjString, P *Ellipsoid) error {
 
 	/* Not giving a shape parameter means selecting a sphere, unless shape */
 	/* has been selected previously via ellps=xxx */
-	if !found && P.es != 0 {
+	if !found && P.Es != 0 {
 		return nil
 	}
-	if !found && P.es == 0 {
-		P.es = 0
-		P.f = 0
-		P.b = P.a
+	if !found && P.Es == 0 {
+		P.Es = 0
+		P.F = 0
+		P.B = P.A
 		return nil
 	}
 
-	P.es = 0
-	P.f = 0
-	P.b = 0
-	P.e = 0
-	P.rf = 0
+	P.Es = 0
+	P.F = 0
+	P.B = 0
+	P.E = 0
+	P.Rf = 0
 
 	switch key {
 
 	/* reverse flattening, rf */
 	case "rf":
-		P.rf = foundValue
-		if P.rf == math.MaxFloat64 {
+		P.Rf = foundValue
+		if P.Rf == math.MaxFloat64 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		if P.rf == 0 {
+		if P.Rf == 0 {
 			return merror.New(merror.ErrRevFlatteningIsZero)
 		}
-		P.f = 1 / P.rf
-		P.es = 2*P.f - P.f*P.f
+		P.F = 1 / P.Rf
+		P.Es = 2*P.F - P.F*P.F
 
 	/* flattening, f */
 	case "f":
-		P.f = foundValue
-		if P.f == math.MaxFloat64 {
+		P.F = foundValue
+		if P.F == math.MaxFloat64 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		if P.f == 0 {
+		if P.F == 0 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		P.rf = 1 / P.f
-		P.es = 2*P.f - P.f*P.f
+		P.Rf = 1 / P.F
+		P.Es = 2*P.F - P.F*P.F
 
 	/* eccentricity squared, es */
 	case "es":
-		P.es = foundValue
-		if P.es == math.MaxFloat64 {
+		P.Es = foundValue
+		if P.Es == math.MaxFloat64 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		if P.es == 1 {
+		if P.Es == 1 {
 			return merror.New(merror.ErrEccentricityIsOne)
 		}
 
 	/* eccentricity, e */
 	case "e":
-		P.e = foundValue
-		if P.e == math.MaxFloat64 {
+		P.E = foundValue
+		if P.E == math.MaxFloat64 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		if P.e == 0 {
+		if P.E == 0 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		if P.e == 1 {
+		if P.E == 1 {
 			return merror.New(merror.ErrEccentricityIsOne)
 		}
-		P.es = P.e * P.e
+		P.Es = P.E * P.E
 
 	/* semiminor axis, b */
 	case "b":
-		P.b = foundValue
-		if P.b == math.MaxFloat64 {
+		P.B = foundValue
+		if P.B == math.MaxFloat64 {
 			return merror.New(merror.ErrInvalidArg)
 		}
-		if P.b == 0 {
+		if P.B == 0 {
 			return merror.New(merror.ErrEccentricityIsOne)
 		}
-		if P.b == P.a {
+		if P.B == P.A {
 			break
 		}
-		P.f = (P.a - P.b) / P.a
-		P.es = 2*P.f - P.f*P.f
+		P.F = (P.A - P.B) / P.A
+		P.Es = 2*P.F - P.F*P.F
 
 	default:
 		return merror.New(merror.ErrInvalidArg)
 
 	}
 
-	if P.es < 0 {
+	if P.Es < 0 {
 		return merror.New(merror.ErrEsLessThanZero)
 	}
 
@@ -403,26 +398,26 @@ func ellpsSpherification(ps *ProjString, P *Ellipsoid) error {
 
 	/* R_A - a sphere with same area as ellipsoid */
 	case "R_A":
-		P.a *= 1. - P.es*(SIXTH+P.es*(RA4+P.es*RA6))
+		P.A *= 1. - P.Es*(SIXTH+P.Es*(RA4+P.Es*RA6))
 
 	/* R_V - a sphere with same volume as ellipsoid */
 	case "R_V":
-		P.a *= 1. - P.es*(SIXTH+P.es*(RV4+P.es*RV6))
+		P.A *= 1. - P.Es*(SIXTH+P.Es*(RV4+P.Es*RV6))
 
 	/* R_a - a sphere with R = the arithmetic mean of the ellipsoid */
 	case "R_a":
-		P.a = (P.a + P.b) / 2
+		P.A = (P.A + P.B) / 2
 
 	/* R_g - a sphere with R = the geometric mean of the ellipsoid */
 	case "R_g":
-		P.a = math.Sqrt(P.a * P.b)
+		P.A = math.Sqrt(P.A * P.B)
 
 	/* R_h - a sphere with R = the harmonic mean of the ellipsoid */
 	case "R_h":
-		if P.a+P.b == 0 {
+		if P.A+P.B == 0 {
 			return merror.New(merror.ErrToleranceCondition)
 		}
-		P.a = (2 * P.a * P.b) / (P.a + P.b)
+		P.A = (2 * P.A * P.B) / (P.A + P.B)
 
 		/* R_lat_a - a sphere with R = the arithmetic mean of the ellipsoid at given latitude */
 		/* R_lat_g - a sphere with R = the geometric  mean of the ellipsoid at given latitude */
@@ -439,11 +434,11 @@ func ellpsSpherification(ps *ProjString, P *Ellipsoid) error {
 			return merror.New(merror.ErrRefRadLargerThan90)
 		}
 		t = math.Sin(t)
-		t = 1 - P.es*t*t
+		t = 1 - P.Es*t*t
 		if key == "R_lat_a" { /* arithmetic */
-			P.a *= (1. - P.es + t) / (2 * t * math.Sqrt(t))
+			P.A *= (1. - P.Es + t) / (2 * t * math.Sqrt(t))
 		} else { /* geometric */
-			P.a *= math.Sqrt(1-P.es) / t
+			P.A *= math.Sqrt(1-P.Es) / t
 		}
 
 	default:
@@ -452,12 +447,12 @@ func ellpsSpherification(ps *ProjString, P *Ellipsoid) error {
 	}
 
 	/* Clean up the ellipsoidal parameters to reflect the sphere */
-	P.es = 0
-	P.e = 0
-	P.f = 0
-	P.rf = math.MaxFloat64
-	P.b = P.a
-	pjCalcEllipsoidParams(P, P.a, 0)
+	P.Es = 0
+	P.E = 0
+	P.F = 0
+	P.Rf = math.MaxFloat64
+	P.B = P.A
+	pjCalcEllipsoidParams(P, P.A, 0)
 
 	return nil
 }

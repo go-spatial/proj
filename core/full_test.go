@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-spatial/proj4go/core"
+	"github.com/go-spatial/proj4go/mlog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,21 +14,25 @@ func TestFull(t *testing.T) {
 	ps, err := core.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
 	assert.NoError(err)
 
+	mlog.Printf("%s", ps)
+	mlog.Printf("%s", ps.Projection)
+	mlog.Printf("%s", ps.Projection.E)
+
 	proj := ps.Projection
 
 	// TODO: convert to radians, the internal format
-	// 55d N, 12d E
-	input := core.CoordLP{12.0, 55.0}
+	// 55d N, 12d E (lon lat) (lam phi)
+	input := core.CoordLP{Lam: 12.0, Phi: 55.0}
 
 	output, err := proj.Forward(input)
 	assert.NoError(err)
 
-	x, y := output.ToDegrees()
-	assert.InDelta(32.1, x, 1e-6)
-	assert.InDelta(65.4, x, 1e-6)
+	e, n := output.(core.CoordENU).E, output.(core.CoordENU).N
+	assert.InDelta(691875.63, e, 1e-6)
+	assert.InDelta(6098907.83, n, 1e-6)
 
 	output, err = proj.Inverse(output)
-	x, y = output.ToDegrees()
-	assert.InDelta(12.0, x, 1e-6)
-	assert.InDelta(55.0, x, 1e-6)
+	l, p := output.(core.CoordLP).Lam, output.(core.CoordLP).Phi
+	assert.InDelta(12.0, l, 1e-6)
+	assert.InDelta(55.0, p, 1e-6)
 }
