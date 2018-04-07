@@ -229,7 +229,7 @@ func localSetup(P *core.Operation) error {
 	Q := &etmercOpaque{}
 	P.Q = Q
 
-	PE := P.E
+	PE := P.Ellipsoid
 
 	if PE.Es <= 0 {
 		return merror.New(merror.ErrEllipsoidUseRequired)
@@ -323,7 +323,7 @@ func etmercSetup(op *core.Operation) error {
 
 func utmSetup(op *core.Operation) error {
 
-	if op.E.Es == 0.0 {
+	if op.Ellipsoid.Es == 0.0 {
 		return merror.New(merror.ErrEllipsoidUseRequired)
 	}
 	if op.Lam0 < -1000.0 || op.Lam0 > 1000.0 {

@@ -5,7 +5,7 @@ set -e
 for i in apps/proj core merror mlog operations support tables
 do
     pushd $i &> /dev/null
-    go test -v
+    go test -v -cover
     if [ "$?" -ne "0" ]
     then
         echo fail

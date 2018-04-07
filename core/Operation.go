@@ -117,6 +117,7 @@ func NewOperation(ps *ProjString) (*Operation, error) {
 		NeedEllps:  true,
 		Left:       IOUnitsAngular,
 		Right:      IOUnitsClassic,
+		Axis:       "enu",
 	}
 
 	err := op.initialize()
@@ -160,14 +161,7 @@ func (op *Operation) initialize() error {
 
 	op.Info = opInfo
 
-	// do setup work specific to this operation
-	// (locate_constructor)
-	err := op.Info.Setup(op)
-	if err != nil {
-		return err
-	}
-
-	err = op.processDatum()
+	err := op.processDatum()
 	if err != nil {
 		return err
 	}
@@ -189,6 +183,13 @@ func (op *Operation) initialize() error {
 	}
 
 	err = op.processMisc()
+	if err != nil {
+		return err
+	}
+
+	// do setup work specific to this operation
+	// (locate_constructor)
+	err = op.Info.Setup(op)
 	if err != nil {
 		return err
 	}

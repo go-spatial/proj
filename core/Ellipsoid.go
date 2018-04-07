@@ -228,7 +228,13 @@ func (e *Ellipsoid) doEllps(ps *ProjString) error {
 	e.Ell = ellps.Ell
 	e.Name = ellps.Name
 
-	err := e.doSize(ps)
+	pl, err := support.NewPairListFromString(ellps.Ell + " " + ellps.Major)
+	if err != nil {
+		panic(err)
+	}
+	ps.Args.AddList(pl)
+
+	err = e.doSize(ps)
 	if err != nil {
 		return err
 	}
