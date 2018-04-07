@@ -9,13 +9,16 @@ import (
 var DatumTable map[string]*Datum
 
 // EllipsoidTable is the global list of all the known datums
-var EllipsoidTable map[string]*Ellipsoid
+var EllipsoidTable map[string]*tables.RawEllipsoid
 
 // PrimeMeridianTable is the global list of all the known datums
 var PrimeMeridianTable map[string]*PrimeMeridian
 
 // OperationInfoTable is the global list of all the known operations
 var OperationInfoTable = map[string]*OperationInfo{}
+
+// UnitInfoTable is the global list of all the known units
+var UnitInfoTable = map[string]*tables.RawUnit{}
 
 func init() {
 
@@ -44,17 +47,11 @@ func init() {
 	//
 	// Ellipsoid
 	//
-	EllipsoidTable = map[string]*Ellipsoid{}
+	EllipsoidTable = map[string]*tables.RawEllipsoid{}
 
 	for _, raw := range tables.RawEllipsoids {
-		d := &Ellipsoid{
-			ID:    raw.ID,
-			Major: raw.Major,
-			Ell:   raw.Ell,
-			Name:  raw.Name,
-		}
 
-		EllipsoidTable[d.ID] = d
+		EllipsoidTable[raw.ID] = raw
 	}
 
 	//
@@ -68,5 +65,14 @@ func init() {
 			Definition: raw.Definition,
 		}
 		PrimeMeridianTable[pm.ID] = pm
+	}
+
+	//
+	// Units
+	//
+	UnitInfoTable = map[string]*tables.RawUnit{}
+
+	for _, raw := range tables.RawUnits {
+		UnitInfoTable[raw.ID] = raw
 	}
 }

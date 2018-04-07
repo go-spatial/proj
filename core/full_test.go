@@ -18,7 +18,7 @@ func TestFull(t *testing.T) {
 	op, err := core.NewOperation(ps)
 	assert.NoError(err)
 	mlog.Printf("%s", op)
-	mlog.Printf("%s", op.E)
+	mlog.Printf("%s", op.Ellipsoid)
 
 	// TODO: convert to radians, the internal format
 	// 55d N, 12d E (lon lat) (lam phi)

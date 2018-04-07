@@ -55,6 +55,18 @@ type Ellipsoid struct {
 	EsOrig, AOrig float64 /* es and a before any +proj related adjustment */
 }
 
+// NewEllipsoid creates an Ellipsoid and initializes it from the proj string
+func NewEllipsoid(op *Operation) (*Ellipsoid, error) {
+	ellipsoid := &Ellipsoid{}
+
+	err := ellipsoid.initialize(op)
+	if err != nil {
+		return nil, err
+	}
+
+	return ellipsoid, nil
+}
+
 func (e *Ellipsoid) String() string {
 	b, err := json.MarshalIndent(e, "", "    ")
 	if err != nil {
@@ -64,17 +76,18 @@ func (e *Ellipsoid) String() string {
 	return string(b)
 }
 
-func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
+func (e *Ellipsoid) initialize(op *Operation) error {
 
-	var err error
+	ps := op.ProjString
 
 	/* Specifying R overrules everything */
 	if ps.Args.ContainsKey("R") {
-		err = ellpsSize(ps, P)
+
+		err := e.doSize(ps)
 		if err != nil {
 			return err
 		}
-		err = pjCalcEllipsoidParams(P, P.A, 0)
+		err = e.doCalcParams(e.A, 0)
 		if err != nil {
 			return err
 		}
@@ -82,31 +95,31 @@ func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
 	}
 
 	/* If an ellps argument is specified, start by using that */
-	err = ellpsEllps(ps, P)
+	err := e.doEllps(op.ProjString)
 	if err != nil {
 		return err
 	}
 
 	/* We may overwrite the size */
-	err = ellpsSize(ps, P)
+	err = e.doSize(op.ProjString)
 	if err != nil {
 		return err
 	}
 
 	/* We may also overwrite the shape */
-	err = ellpsShape(ps, P)
+	err = e.doShape(op.ProjString)
 	if err != nil {
 		return err
 	}
 
 	/* When we're done with it, we compute all related ellipsoid parameters */
-	err = pjCalcEllipsoidParams(P, P.A, P.Es)
+	err = e.doCalcParams(e.A, e.Es)
 	if err != nil {
 		return nil
 	}
 
 	/* And finally, we may turn it into a sphere */
-	err = ellpsSpherification(ps, P)
+	err = e.doSpherification(op.ProjString)
 	if err != nil {
 		return err
 	}
@@ -123,7 +136,9 @@ func (ps *ProjString) processEllipsoid(P *Ellipsoid) error {
 	return nil
 }
 
-func pjCalcEllipsoidParams(P *Ellipsoid, a float64, es float64) error {
+func (e *Ellipsoid) doCalcParams(a float64, es float64) error {
+
+	P := e
 
 	P.A = a
 	P.Es = es
@@ -190,7 +205,7 @@ func pjCalcEllipsoidParams(P *Ellipsoid, a float64, es float64) error {
 	return nil
 }
 
-func ellpsEllps(ps *ProjString, P *Ellipsoid) error {
+func (e *Ellipsoid) doEllps(ps *ProjString) error {
 
 	/* Sail home if ellps=xxx is not specified */
 	name, ok := ps.Args.GetAsString("ellps")
@@ -208,13 +223,27 @@ func ellpsEllps(ps *ProjString, P *Ellipsoid) error {
 		return merror.New(merror.ErrUnknownEllpParam)
 	}
 
-	ellpsSize(ps, ellps)
-	ellpsShape(ps, ellps)
+	e.ID = ellps.ID
+	e.Major = ellps.Major
+	e.Ell = ellps.Ell
+	e.Name = ellps.Name
+
+	err := e.doSize(ps)
+	if err != nil {
+		return err
+	}
+
+	err = e.doShape(ps)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func ellpsSize(ps *ProjString, P *Ellipsoid) error {
+func (e *Ellipsoid) doSize(ps *ProjString) error {
+
+	P := e
 
 	aWasSet := false
 
@@ -257,7 +286,9 @@ func ellpsSize(ps *ProjString, P *Ellipsoid) error {
 	return nil
 }
 
-func ellpsShape(ps *ProjString, P *Ellipsoid) error {
+func (e *Ellipsoid) doShape(ps *ProjString) error {
+
+	P := e
 
 	keys := []string{"rf", "f", "es", "e", "b"}
 
@@ -369,7 +400,9 @@ func ellpsShape(ps *ProjString, P *Ellipsoid) error {
 	return nil
 }
 
-func ellpsSpherification(ps *ProjString, P *Ellipsoid) error {
+func (e *Ellipsoid) doSpherification(ps *ProjString) error {
+
+	P := e
 
 	/* series coefficients for calculating ellipsoid-equivalent spheres */
 	const SIXTH = 1 / 6.
@@ -452,7 +485,11 @@ func ellpsSpherification(ps *ProjString, P *Ellipsoid) error {
 	P.F = 0
 	P.Rf = math.MaxFloat64
 	P.B = P.A
-	pjCalcEllipsoidParams(P, P.A, 0)
+
+	err := e.doCalcParams(P.A, 0)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -2,6 +2,9 @@ package core
 
 import (
 	"encoding/json"
+	"math"
+	"strconv"
+	"strings"
 
 	"github.com/go-spatial/proj4go/merror"
 	"github.com/go-spatial/proj4go/support"
@@ -12,11 +15,11 @@ type DatumType int
 
 // All the DatumType constants
 const (
-	DatumTypeUnknown  DatumType = 0
-	DatumType3Param             = 1
-	DatumType7Param             = 2
-	DatumTypeGridShif           = 3
-	DatumTypeWGS84              = 4 /* WGS84 (or anything considered equivalent) */
+	DatumTypeUnknown   DatumType = 0
+	DatumType3Param              = 1
+	DatumType7Param              = 2
+	DatumTypeGridShift           = 3
+	DatumTypeWGS84               = 4 /* WGS84 (or anything considered equivalent) */
 )
 
 // IOUnitsType is the enum for the types of input/output units we support
@@ -42,8 +45,8 @@ type Operation struct {
 	//
 	// COORDINATE HANDLING
 	//
-	over         int  /* Over-range flag */
-	geoc         int  /* Geocentric latitude flag */
+	Over         bool /* Over-range flag */
+	Geoc         bool /* Geocentric latitude flag */
 	IsLatLong    bool /* proj=latlong ... not really a projection at all */
 	IsGeocentric bool /* proj=geocent ... not really a projection at all */
 	NeedEllps    bool /* 0 for operations that are purely cartesian */
@@ -54,7 +57,7 @@ type Operation struct {
 	//
 	// ELLIPSOID
 	//
-	E *Ellipsoid
+	Ellipsoid *Ellipsoid
 
 	//
 	// CARTOGRAPHIC OFFSETS
@@ -78,20 +81,19 @@ type Operation struct {
 	//struct _pj_gi **gridlist;
 	//int     gridlist_count;
 
-	//int     has_geoid_vgrids;
+	HasGeoidVgrids bool
 	//struct _pj_gi **vgridlist_geoid;
 	//int     vgridlist_geoid_count;
 
-	//double  from_greenwich;            /* prime meridian offset (in radians) */
-	//LongWrapCenter float64         /* 0.0 for -180 to 180, actually in radians*/
-	//IsLongWrapSet  bool
-	//Axis           string  /* Axis order, pj_transform/pj_adjust_axis */
+	FromGreenwich  float64 /* prime meridian offset (in radians) */
+	LongWrapCenter float64 /* 0.0 for -180 to 180, actually in radians*/
+	IsLongWrapSet  bool
+	Axis           string /* Axis order, pj_transform/pj_adjust_axis */
 
 	/* New Datum Shift Grid Catalogs */
-	//char   *catalog_name;
+	CatalogName string
 	//struct _PJ_GridCatalog *catalog;
-
-	//double  datum_date;                 /* TODO: Description needed */
+	DatumDate float64
 
 	//struct _pj_gi *last_before_grid;    /* TODO: Description needed */
 	//PJ_Region     last_before_region;   /* TODO: Description needed */
@@ -115,6 +117,11 @@ func NewOperation(ps *ProjString) (*Operation, error) {
 		NeedEllps:  true,
 		Left:       IOUnitsAngular,
 		Right:      IOUnitsClassic,
+	}
+
+	err := op.initialize()
+	if err != nil {
+		return nil, err
 	}
 
 	return op, nil
@@ -153,12 +160,35 @@ func (op *Operation) initialize() error {
 
 	op.Info = opInfo
 
+	// do setup work specific to this operation
+	// (locate_constructor)
 	err := op.Info.Setup(op)
 	if err != nil {
 		return err
 	}
 
 	err = op.processDatum()
+	if err != nil {
+		return err
+	}
+
+	err = op.processEllipsoid()
+	if err != nil {
+		return err
+	}
+
+	/* Now that we have ellipse information check for WGS84 datum */
+	if op.DatumType == DatumType3Param &&
+		op.DatumParams[0] == 0.0 &&
+		op.DatumParams[1] == 0.0 &&
+		op.DatumParams[2] == 0.0 &&
+		op.Ellipsoid.A == 6378137.0 &&
+		math.Abs(op.Ellipsoid.Es-0.006694379990) < 0.000000000050 {
+		/*WGS84/GRS80*/
+		op.DatumType = DatumTypeWGS84
+	}
+
+	err = op.processMisc()
 	if err != nil {
 		return err
 	}
@@ -181,22 +211,36 @@ func (op *Operation) processDatum() error {
 		// add the ellipse to the end of the list
 		// TODO: move this into the ProjString processor?
 
-		op.ProjString.Args.Add(support.Pair{Key: "ellps", Value: datum.EllipseID})
-		op.ProjString.Args.AddList(datum.Definition)
+		if datum.EllipseID != "" {
+			op.ProjString.Args.Add(support.Pair{Key: "ellps", Value: datum.EllipseID})
+		}
+		if datum.DefinitionString != "" {
+			op.ProjString.Args.AddList(datum.Definition)
+		}
 	}
 
-	_, ok = op.ProjString.Args.GetAsString("nadgrids")
-	if ok {
-		return merror.New(merror.NotYetSupported)
-	}
+	if op.ProjString.Args.ContainsKey("nadgrids") {
+		op.DatumType = DatumTypeGridShift
 
-	_, ok = op.ProjString.Args.GetAsString("catalog")
-	if ok {
-		return merror.New(merror.NotYetSupported)
-	}
+	} else if op.ProjString.Args.ContainsKey("catalog") {
+		op.DatumType = DatumTypeGridShift
+		catalogName, ok := op.ProjString.Args.GetAsString("catalog")
+		if !ok {
+			return merror.New(merror.BadProjStringError)
+		}
+		op.CatalogName = catalogName
+		datumDate, ok := op.ProjString.Args.GetAsString("sdate")
+		if datumDate != "" {
+			op.DatumDate = support.ParseDate(datumDate)
+		}
 
-	values, ok := op.ProjString.Args.GetAsFloats("towgs84")
-	if ok {
+	} else if op.ProjString.Args.ContainsKey("towgs84") {
+
+		values, ok := op.ProjString.Args.GetAsFloats("towgs84")
+		if !ok {
+			return merror.New(merror.BadProjStringError)
+		}
+
 		if len(values) == 3 {
 			op.DatumType = DatumType3Param
 
@@ -223,13 +267,221 @@ func (op *Operation) processDatum() error {
 			// transform from parts per million to scaling factor
 			op.DatumParams[6] = (op.DatumParams[6] / 1000000.0) + 1
 
+			/* Note that pj_init() will later switch datum_type to
+			   PJD_WGS84 if shifts are all zero, and ellipsoid is WGS84 or GRS80 */
 		} else {
 			return merror.New(merror.BadProjStringError)
 		}
-
-		/* Note that pj_init() will later switch datum_type to
-		   PJD_WGS84 if shifts are all zero, and ellipsoid is WGS84 or GRS80 */
 	}
+
+	return nil
+}
+
+func (op *Operation) processEllipsoid() error {
+
+	ellipsoid, err := NewEllipsoid(op)
+	if err != nil {
+
+		/* Didn't get an ellps, but doesn't need one: Get a free WGS84 */
+		if op.NeedEllps {
+			return merror.New(merror.BadProjStringError)
+		}
+
+		ellipsoid = &Ellipsoid{}
+		ellipsoid.F = 1.0 / 298.257223563
+		ellipsoid.AOrig = 6378137.0
+		ellipsoid.A = 6378137.0
+		ellipsoid.EsOrig = ellipsoid.F * (2 - ellipsoid.F)
+		ellipsoid.Es = ellipsoid.F * (2 - ellipsoid.F)
+	}
+
+	err = ellipsoid.doCalcParams(ellipsoid.A, ellipsoid.Es)
+	if err != nil {
+		return err
+	}
+
+	op.Ellipsoid = ellipsoid
+
+	return nil
+}
+
+func (op *Operation) readUnits(vertical bool) (float64, float64, error) {
+
+	units := "units"
+	toMeter := "toMeter"
+
+	var to, from float64
+
+	if vertical {
+		units = "v" + units
+		toMeter = "v" + toMeter
+	}
+
+	name, ok := op.ProjString.Args.GetAsString(units)
+	var s string
+	if ok {
+		u, ok := UnitInfoTable[name]
+		if !ok {
+			return 0.0, 0.0, merror.New(merror.ErrUnknownUnit)
+		}
+		s = u.ToMetersS
+	}
+
+	if op.ProjString.Args.ContainsKey(toMeter) {
+		s, _ = op.ProjString.Args.GetAsString(toMeter)
+	}
+
+	if s != "" {
+		var factor float64
+		var ratio = false
+
+		/* ratio number? */
+		if len(s) > 1 && s[0:1] == "1" && s[1:2] == "/" {
+			ratio = true
+			s = s[2:]
+		}
+
+		factor, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0.0, 0.0, merror.New(merror.BadProjStringError)
+		}
+		if (factor <= 0.0) || (1.0/factor == 0.0) {
+			return 0.0, 0.0, merror.New(merror.ErrUnitFactorLessThanZero)
+		}
+
+		if ratio {
+			to = 1.0 / factor
+		} else {
+			to = factor
+		}
+
+		from = 1.0 / op.FromMeter
+	} else {
+		to = 1.0
+		from = 1.0
+	}
+
+	return to, from, nil
+}
+
+func (op *Operation) processMisc() error {
+
+	/* Set PIN->geoc coordinate system */
+	op.Geoc = (op.Ellipsoid.Es != 0.0 && op.ProjString.Args.ContainsKey("geoc"))
+
+	/* Over-ranging flag */
+	op.Over = op.ProjString.Args.ContainsKey("over")
+
+	/* Vertical datum geoid grids */
+	op.HasGeoidVgrids = op.ProjString.Args.ContainsKey("geoidgrids")
+
+	/* Longitude center for wrapping */
+	op.IsLongWrapSet = op.ProjString.Args.ContainsKey("lon_wrap")
+	if op.IsLongWrapSet {
+		op.LongWrapCenter, _ = op.ProjString.Args.GetAsFloat("lon_wrap")
+		/* Don't accept excessive values otherwise we might perform badly */
+		/* when correcting longitudes around it */
+		/* The test is written this way to error on long_wrap_center "=" NaN */
+		if !(math.Abs(op.LongWrapCenter) < 10.0*support.TwoPi) {
+			return merror.New(merror.ErrLatOrLonExceededLimit)
+		}
+	}
+
+	/* Axis orientation */
+	if op.ProjString.Args.ContainsKey("axis") {
+		axisLegal := "ewnsud"
+		axisArg, _ := op.ProjString.Args.GetAsString("axis")
+		if len(axisArg) != 3 {
+			return merror.New(merror.ErrAxis)
+		}
+
+		if !strings.ContainsAny(axisArg[0:1], axisLegal) ||
+			!strings.ContainsAny(axisArg[1:2], axisLegal) ||
+			!strings.ContainsAny(axisArg[2:3], axisLegal) {
+			return merror.New(merror.ErrAxis)
+		}
+
+		/* TODO: it would be nice to validate we don't have on axis repeated */
+		op.Axis = axisArg
+	}
+
+	/* Central meridian */
+	f, ok := op.ProjString.Args.GetAsFloat("lon_0")
+	if ok {
+		op.Lam0 = f
+	}
+
+	/* Central latitude */
+	f, ok = op.ProjString.Args.GetAsFloat("lat_0")
+	if ok {
+		op.Phi0 = f
+	}
+
+	/* False easting and northing */
+	f, ok = op.ProjString.Args.GetAsFloat("x_0")
+	if ok {
+		op.X0 = f
+	}
+	f, ok = op.ProjString.Args.GetAsFloat("y_0")
+	if ok {
+		op.Y0 = f
+	}
+	f, ok = op.ProjString.Args.GetAsFloat("z_0")
+	if ok {
+		op.Z0 = f
+	}
+	f, ok = op.ProjString.Args.GetAsFloat("t_0")
+	if ok {
+		op.T0 = f
+	}
+
+	/* General scaling factor */
+	if op.ProjString.Args.ContainsKey("k_0") {
+		op.K0, _ = op.ProjString.Args.GetAsFloat("k_0")
+	} else if op.ProjString.Args.ContainsKey("k") {
+		op.K0, _ = op.ProjString.Args.GetAsFloat("k")
+	} else {
+		op.K0 = 1.0
+	}
+	if op.K0 <= 0.0 {
+		return merror.New(merror.ErrKLessThanZero)
+	}
+
+	/* Set units */
+	to, from, err := op.readUnits(false)
+	if err != nil {
+		return err
+	}
+	op.ToMeter = to
+	op.FromMeter = from
+
+	to, from, err = op.readUnits(true)
+	if err != nil {
+		return err
+	}
+	op.VToMeter = to
+	op.VFromMeter = from
+
+	/* Prime meridian */
+	name, ok := op.ProjString.Args.GetAsString("pm")
+	if ok {
+		var value string
+		pm, ok := PrimeMeridianTable[name]
+		if ok {
+			value = pm.Definition
+		} else {
+			value = name
+		}
+		f, err = support.DMSToR(value)
+		if err != nil {
+			return err
+		}
+		op.FromGreenwich = f
+	} else {
+		op.FromGreenwich = 0.0
+	}
+
+	// TODO: geod_init(PIN->geod, PIN->a,  (1 - sqrt (1 - PIN->es)));
 
 	return nil
 }

@@ -9,7 +9,7 @@ type RawEllipsoid struct {
 }
 
 // RawEllipsoids is the global table of ellipsoid constants
-var RawEllipsoids = []RawEllipsoid{
+var RawEllipsoids = []*RawEllipsoid{
 	{"MERIT", "a=6378137.0", "rf=298.257", "MERIT 1983"},
 	{"SGS85", "a=6378136.0", "rf=298.257", "Soviet Geodetic System 85"},
 	{"GRS80", "a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)"},
