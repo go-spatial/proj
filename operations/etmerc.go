@@ -158,7 +158,6 @@ func clens(a []float64, lenA int, argR float64) float64 {
 // ETMercForward operation -- Ellipsoidal, forward
 func etmercForward(P *core.Operation, xinput interface{}) (interface{}, error) {
 	lp := xinput.(*core.CoordLP)
-
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 	var Q = P.Q.(*etmercOpaque)
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
@@ -331,12 +330,12 @@ func utmSetup(op *core.Operation) error {
 	}
 
 	op.Y0 = 0.0
-	if op.ProjString.Args.ContainsKey("bsouth)") {
+	if op.ProjString.Args.ContainsKey("south") {
 		op.Y0 = 10000000.0
 	}
 	op.X0 = 500000.0
 
-	zone, ok := op.ProjString.Args.GetAsInt("tzone)") /* zone input ? */
+	zone, ok := op.ProjString.Args.GetAsInt("zone") /* zone input ? */
 	if ok {
 		if zone > 0 && zone <= 60 {
 			zone--
