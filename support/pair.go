@@ -18,13 +18,13 @@ type Pair struct {
 // (We can't use a map because order of the items is important and
 // because we might have duplicate keys.)
 type PairList struct {
-	pairs []Pair
+	Pairs []Pair
 }
 
 // NewPairList returns a new PairList
 func NewPairList() *PairList {
 	return &PairList{
-		pairs: []Pair{},
+		Pairs: []Pair{},
 	}
 }
 
@@ -76,28 +76,28 @@ func NewPairListFromString(source string) (*PairList, error) {
 
 // Len returns the number of pairs in the list
 func (pl *PairList) Len() int {
-	return len(pl.pairs)
+	return len(pl.Pairs)
 }
 
 // Get returns the ith pair in the list
 func (pl *PairList) Get(i int) Pair {
-	return pl.pairs[i]
+	return pl.Pairs[i]
 }
 
 // Add adds a Pair to the end of the list
 func (pl *PairList) Add(pair Pair) {
-	pl.pairs = append(pl.pairs, pair)
+	pl.Pairs = append(pl.Pairs, pair)
 }
 
 // AddList adds a PairList's items to the end of the list
 func (pl *PairList) AddList(list *PairList) {
-	pl.pairs = append(pl.pairs, list.pairs...)
+	pl.Pairs = append(pl.Pairs, list.Pairs...)
 }
 
 // ContainsKey returns true iff the key is present in the list
 func (pl *PairList) ContainsKey(key string) bool {
 
-	for _, pair := range pl.pairs {
+	for _, pair := range pl.Pairs {
 		if pair.Key == key {
 			return true
 		}
@@ -110,7 +110,7 @@ func (pl *PairList) ContainsKey(key string) bool {
 func (pl *PairList) CountKey(key string) int {
 
 	count := 0
-	for _, pair := range pl.pairs {
+	for _, pair := range pl.Pairs {
 		if pair.Key == key {
 			count++
 		}
@@ -122,7 +122,7 @@ func (pl *PairList) CountKey(key string) int {
 // get returns the (string) value of the first occurrence of the key
 func (pl *PairList) get(key string) (string, bool) {
 
-	for _, pair := range pl.pairs {
+	for _, pair := range pl.Pairs {
 		if pair.Key == key {
 			return pair.Value, true
 		}
@@ -139,12 +139,10 @@ func (pl *PairList) GetAsString(key string) (string, bool) {
 
 // GetAsInt returns the value of the first occurrence of the key, as an int
 func (pl *PairList) GetAsInt(key string) (int, bool) {
-
 	value, ok := pl.get(key)
 	if !ok {
 		return 0, false
 	}
-
 	i64, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
 		return 0, false
