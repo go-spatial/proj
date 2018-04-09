@@ -15,9 +15,9 @@ type OperationInfo struct {
 	ID           string
 	Description  string
 	Description2 string
-	Forward      ForwardTransform
-	Inverse      InverseTransform
-	Setup        SetupTransform
+	forward      ForwardTransform
+	inverse      InverseTransform
+	setup        SetupTransform
 }
 
 // RegisterOperation adds an OperationInfo entry to the OperationInfoTable
@@ -35,9 +35,9 @@ func RegisterOperation(
 		ID:           id,
 		Description:  description,
 		Description2: description2,
-		Forward:      forward,
-		Inverse:      inverse,
-		Setup:        setup,
+		forward:      forward,
+		inverse:      inverse,
+		setup:        setup,
 	}
 
 	_, ok := OperationInfoTable[id]

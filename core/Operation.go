@@ -130,14 +130,14 @@ func NewOperation(ps *ProjString) (*Operation, error) {
 
 // Forward executes an operation
 func (op *Operation) Forward(input interface{}) (interface{}, error) {
-	f := op.Info.Forward
+	f := op.Info.forward
 	output, err := f(op, input)
 	return output, err
 }
 
 // Inverse executes an operation in reverse
 func (op *Operation) Inverse(input interface{}) (interface{}, error) {
-	f := op.Info.Inverse
+	f := op.Info.inverse
 	output, err := f(op, input)
 	return output, err
 }
@@ -189,7 +189,7 @@ func (op *Operation) initialize() error {
 
 	// do setup work specific to this operation
 	// (locate_constructor)
-	err = op.Info.Setup(op)
+	err = op.Info.setup(op)
 	if err != nil {
 		return err
 	}
@@ -295,6 +295,9 @@ func (op *Operation) processEllipsoid() error {
 		ellipsoid.EsOrig = ellipsoid.F * (2 - ellipsoid.F)
 		ellipsoid.Es = ellipsoid.F * (2 - ellipsoid.F)
 	}
+
+	ellipsoid.AOrig = ellipsoid.A
+	ellipsoid.EsOrig = ellipsoid.Es
 
 	err = ellipsoid.doCalcParams(ellipsoid.A, ellipsoid.Es)
 	if err != nil {
