@@ -1,6 +1,7 @@
 package mlog
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -35,6 +36,19 @@ func Debugf(format string, v ...interface{}) {
 func Printf(format string, v ...interface{}) {
 	if InfoEnabled {
 		s := fmt.Sprintf(format, v...)
+		infoLogger.Output(2, s)
+	}
+}
+
+// Printv writes a variable as a regular log message to stderr
+func Printv(v interface{}) {
+	if InfoEnabled {
+		//s := fmt.Sprintf("%#v", v)
+		b, err := json.MarshalIndent(v, "", "    ")
+		if err != nil {
+			panic(err)
+		}
+		s := string(b)
 		infoLogger.Output(2, s)
 	}
 }
