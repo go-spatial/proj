@@ -1,6 +1,8 @@
 package support
 
-import "math"
+import (
+	"math"
+)
 
 // Hypot is sqrt(x * x + y * y)
 //
@@ -19,23 +21,26 @@ import "math"
 //	the range to values less that 9.5e153 --- a considerable reduction
 //	in range!
 func Hypot(x, y float64) float64 {
-	if x < 0. {
-		x = -x
-	} else if x == 0. {
-		if y < 0. {
-			return -y
+	/*
+		if x < 0. {
+			x = -x
+		} else if x == 0. {
+			if y < 0. {
+				return -y
+			}
+			return y
 		}
-		return y
-	}
-	if y < 0. {
-		y = -y
-	} else if y == 0. {
-		return (x)
-	}
-	if x < y {
-		x /= y
-		return (y * math.Sqrt(1.+x*x))
-	}
-	y /= x
-	return (x * math.Sqrt(1.+y*y))
+		if y < 0. {
+			y = -y
+		} else if y == 0. {
+			return (x)
+		}
+		if x < y {
+			x /= y
+			return (y * math.Sqrt(1.+x*x))
+		}
+		y /= x
+		return (x * math.Sqrt(1.+y*y))
+	*/
+	return math.Hypot(x, y)
 }
