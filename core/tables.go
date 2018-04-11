@@ -28,7 +28,7 @@ func init() {
 	DatumTable = map[string]*Datum{}
 
 	for _, raw := range tables.RawDatums {
-		pl, err := support.NewPairListFromString(raw.DefinitionString)
+		pl, err := support.NewProjString(raw.DefinitionString)
 		if err != nil {
 			panic(err)
 		}

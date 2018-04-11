@@ -330,12 +330,12 @@ func utmSetup(op *core.Operation) error {
 	}
 
 	op.Y0 = 0.0
-	if op.ProjString.Args.ContainsKey("south") {
+	if op.ProjString.ContainsKey("south") {
 		op.Y0 = 10000000.0
 	}
 	op.X0 = 500000.0
 
-	zone, ok := op.ProjString.Args.GetAsInt("zone") /* zone input ? */
+	zone, ok := op.ProjString.GetAsInt("zone") /* zone input ? */
 	if ok {
 		if zone > 0 && zone <= 60 {
 			zone--

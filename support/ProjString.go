@@ -1,11 +1,17 @@
 package support
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 
 	"github.com/go-spatial/proj4go/merror"
 )
+
+// ProjString represents a "projection string", such as "+proj=utm +zone=11 +datum=WGS84"
+// TODO: we don't support the "pipeline" or "step" keywords
+
+//---------------------------------------------------------------------
 
 // Pair is a simple key-value pair
 // Pairs use copy semantics (pass-by-value).
@@ -14,26 +20,23 @@ type Pair struct {
 	Value string
 }
 
-// PairList is an array of Pair objects.
+//---------------------------------------------------------------------
+
+// ProjString is an array of Pair objects.
 // (We can't use a map because order of the items is important and
 // because we might have duplicate keys.)
-type PairList struct {
+type ProjString struct {
 	Pairs []Pair
 }
 
-// NewPairList returns a new PairList
-func NewPairList() *PairList {
-	return &PairList{
-		Pairs: []Pair{},
-	}
-}
-
-// NewPairListFromString returns a new PairList from a string
+// NewProjString returns a new ProjString from a string
 // of the form "+proj=utm +zone=11 +datum=WGS84",
 // with the leading "+" is optional and ignoring extra whitespace
-func NewPairListFromString(source string) (*PairList, error) {
+func NewProjString(source string) (*ProjString, error) {
 
-	ret := NewPairList()
+	ret := &ProjString{
+		Pairs: []Pair{},
+	}
 
 	words := strings.Fields(source)
 	for _, w := range words {
@@ -74,28 +77,37 @@ func NewPairListFromString(source string) (*PairList, error) {
 
 }
 
+func (pl *ProjString) String() string {
+	b, err := json.MarshalIndent(pl, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+
+	return string(b)
+}
+
 // Len returns the number of pairs in the list
-func (pl *PairList) Len() int {
+func (pl *ProjString) Len() int {
 	return len(pl.Pairs)
 }
 
 // Get returns the ith pair in the list
-func (pl *PairList) Get(i int) Pair {
+func (pl *ProjString) Get(i int) Pair {
 	return pl.Pairs[i]
 }
 
 // Add adds a Pair to the end of the list
-func (pl *PairList) Add(pair Pair) {
+func (pl *ProjString) Add(pair Pair) {
 	pl.Pairs = append(pl.Pairs, pair)
 }
 
-// AddList adds a PairList's items to the end of the list
-func (pl *PairList) AddList(list *PairList) {
+// AddList adds a ProjString's items to the end of the list
+func (pl *ProjString) AddList(list *ProjString) {
 	pl.Pairs = append(pl.Pairs, list.Pairs...)
 }
 
 // ContainsKey returns true iff the key is present in the list
-func (pl *PairList) ContainsKey(key string) bool {
+func (pl *ProjString) ContainsKey(key string) bool {
 
 	for _, pair := range pl.Pairs {
 		if pair.Key == key {
@@ -107,7 +119,7 @@ func (pl *PairList) ContainsKey(key string) bool {
 }
 
 // CountKey returns the number of times the key is in the list
-func (pl *PairList) CountKey(key string) int {
+func (pl *ProjString) CountKey(key string) int {
 
 	count := 0
 	for _, pair := range pl.Pairs {
@@ -120,7 +132,7 @@ func (pl *PairList) CountKey(key string) int {
 }
 
 // get returns the (string) value of the first occurrence of the key
-func (pl *PairList) get(key string) (string, bool) {
+func (pl *ProjString) get(key string) (string, bool) {
 
 	for _, pair := range pl.Pairs {
 		if pair.Key == key {
@@ -132,13 +144,13 @@ func (pl *PairList) get(key string) (string, bool) {
 }
 
 // GetAsString returns the value of the first occurrence of the key, as a string
-func (pl *PairList) GetAsString(key string) (string, bool) {
+func (pl *ProjString) GetAsString(key string) (string, bool) {
 
 	return pl.get(key)
 }
 
 // GetAsInt returns the value of the first occurrence of the key, as an int
-func (pl *PairList) GetAsInt(key string) (int, bool) {
+func (pl *ProjString) GetAsInt(key string) (int, bool) {
 	value, ok := pl.get(key)
 	if !ok {
 		return 0, false
@@ -152,7 +164,7 @@ func (pl *PairList) GetAsInt(key string) (int, bool) {
 }
 
 // GetAsFloat returns the value of the first occurrence of the key, as a float64
-func (pl *PairList) GetAsFloat(key string) (float64, bool) {
+func (pl *ProjString) GetAsFloat(key string) (float64, bool) {
 
 	value, ok := pl.get(key)
 	if !ok {
@@ -169,7 +181,7 @@ func (pl *PairList) GetAsFloat(key string) (float64, bool) {
 
 // GetAsFloats returns the value of the first occurrence of the key,
 // interpretted as comma-separated floats
-func (pl *PairList) GetAsFloats(key string) ([]float64, bool) {
+func (pl *ProjString) GetAsFloats(key string) ([]float64, bool) {
 
 	value, ok := pl.get(key)
 	if !ok {

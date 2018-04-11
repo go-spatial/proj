@@ -10,5 +10,5 @@ type Datum struct {
 	DefinitionString string
 	EllipseID        string
 	Comments         string
-	Definition       *support.PairList
+	Definition       *support.ProjString
 }

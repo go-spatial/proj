@@ -81,7 +81,7 @@ func (e *Ellipsoid) initialize(op *Operation) error {
 	ps := op.ProjString
 
 	/* Specifying R overrules everything */
-	if ps.Args.ContainsKey("R") {
+	if ps.ContainsKey("R") {
 
 		err := e.doSize(ps)
 		if err != nil {
@@ -205,10 +205,10 @@ func (e *Ellipsoid) doCalcParams(a float64, es float64) error {
 	return nil
 }
 
-func (e *Ellipsoid) doEllps(ps *ProjString) error {
+func (e *Ellipsoid) doEllps(ps *support.ProjString) error {
 
 	/* Sail home if ellps=xxx is not specified */
-	name, ok := ps.Args.GetAsString("ellps")
+	name, ok := ps.GetAsString("ellps")
 	if !ok {
 		return nil
 	}
@@ -228,11 +228,11 @@ func (e *Ellipsoid) doEllps(ps *ProjString) error {
 	e.Ell = ellps.Ell
 	e.Name = ellps.Name
 
-	pl, err := support.NewPairListFromString(ellps.Ell + " " + ellps.Major)
+	pl, err := support.NewProjString(ellps.Ell + " " + ellps.Major)
 	if err != nil {
 		panic(err)
 	}
-	ps.Args.AddList(pl)
+	ps.AddList(pl)
 
 	err = e.doSize(ps)
 	if err != nil {
@@ -247,7 +247,7 @@ func (e *Ellipsoid) doEllps(ps *ProjString) error {
 	return nil
 }
 
-func (e *Ellipsoid) doSize(ps *ProjString) error {
+func (e *Ellipsoid) doSize(ps *support.ProjString) error {
 
 	P := e
 
@@ -260,10 +260,10 @@ func (e *Ellipsoid) doSize(ps *ProjString) error {
 
 	/* Check which size key is specified */
 	key := "R"
-	value, ok := ps.Args.GetAsFloat("R")
+	value, ok := ps.GetAsFloat("R")
 	if !ok {
 		key = "a"
-		value, ok = ps.Args.GetAsFloat("a")
+		value, ok = ps.GetAsFloat("a")
 	}
 	if !ok {
 		if aWasSet {
@@ -292,7 +292,7 @@ func (e *Ellipsoid) doSize(ps *ProjString) error {
 	return nil
 }
 
-func (e *Ellipsoid) doShape(ps *ProjString) error {
+func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 
 	P := e
 
@@ -303,7 +303,7 @@ func (e *Ellipsoid) doShape(ps *ProjString) error {
 	found := false
 	var foundValue float64
 	for _, key = range keys {
-		value, ok := ps.Args.GetAsFloat(key)
+		value, ok := ps.GetAsFloat(key)
 		if ok {
 			found = true
 			foundValue = value
@@ -406,7 +406,7 @@ func (e *Ellipsoid) doShape(ps *ProjString) error {
 	return nil
 }
 
-func (e *Ellipsoid) doSpherification(ps *ProjString) error {
+func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 
 	P := e
 
@@ -422,7 +422,7 @@ func (e *Ellipsoid) doSpherification(ps *ProjString) error {
 	var key string
 	found := false
 	for _, key = range keys {
-		if ps.Args.ContainsKey(key) {
+		if ps.ContainsKey(key) {
 			found = true
 			break
 		}
@@ -461,7 +461,7 @@ func (e *Ellipsoid) doSpherification(ps *ProjString) error {
 		/* R_lat_a - a sphere with R = the arithmetic mean of the ellipsoid at given latitude */
 		/* R_lat_g - a sphere with R = the geometric  mean of the ellipsoid at given latitude */
 	case "R_lat_a", "R_lat_g":
-		v, ok := ps.Args.GetAsString(key)
+		v, ok := ps.GetAsString(key)
 		if !ok {
 			return merror.New(merror.ErrInvalidArg)
 		}

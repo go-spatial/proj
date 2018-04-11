@@ -51,7 +51,7 @@ const epsLat = 1.0e-12
 //
 // In PROJ.4, a "projection" is a conversion from "angular" input to "scaled linear" output.
 type Operation struct {
-	ProjString *ProjString
+	ProjString *support.ProjString
 	Info       *OperationInfo
 
 	//
@@ -122,7 +122,12 @@ type Operation struct {
 }
 
 // NewOperation returns a new Operation object
-func NewOperation(ps *ProjString) (*Operation, error) {
+func NewOperation(ps *support.ProjString) (*Operation, error) {
+
+	err := ValidateProjStringContents(ps)
+	if err != nil {
+		return nil, err
+	}
 
 	op := &Operation{
 		ProjString: ps,
@@ -132,12 +137,37 @@ func NewOperation(ps *ProjString) (*Operation, error) {
 		Axis:       "enu",
 	}
 
-	err := op.initialize()
+	err = op.initialize()
 	if err != nil {
 		return nil, err
 	}
 
 	return op, nil
+}
+
+// ValidateProjStringContents checks to mke sure the contents are semantically valid
+func ValidateProjStringContents(pl *support.ProjString) error {
+
+	// TODO: we don't support +init
+	if pl.CountKey("init") > 0 {
+		return merror.New(merror.BadProjStringError)
+	}
+
+	// TODO: we don't support +pipeline
+	if pl.CountKey("pipeline") > 0 {
+		return merror.New(merror.BadProjStringError)
+	}
+
+	// you have to say +proj=...
+	if pl.CountKey("proj") != 1 {
+		return merror.New(merror.BadProjStringError)
+	}
+	projName, ok := pl.GetAsString("proj")
+	if !ok || projName == "" {
+		return merror.New(merror.ProjValueMissing)
+	}
+
+	return nil
 }
 
 // Forward executes an operation
@@ -189,7 +219,7 @@ func (op *Operation) String() string {
 
 func (op *Operation) initialize() error {
 
-	projName, _ := op.ProjString.Args.GetAsString("proj")
+	projName, _ := op.ProjString.GetAsString("proj")
 	opInfo, ok := OperationInfoTable[projName]
 	if !ok {
 		return merror.New(merror.BadProjStringError)
@@ -237,7 +267,7 @@ func (op *Operation) processDatum() error {
 
 	op.DatumType = DatumTypeUnknown
 
-	datumName, ok := op.ProjString.Args.GetAsString("datum")
+	datumName, ok := op.ProjString.GetAsString("datum")
 	if ok {
 
 		datum, ok := DatumTable[datumName]
@@ -249,31 +279,31 @@ func (op *Operation) processDatum() error {
 		// TODO: move this into the ProjString processor?
 
 		if datum.EllipseID != "" {
-			op.ProjString.Args.Add(support.Pair{Key: "ellps", Value: datum.EllipseID})
+			op.ProjString.Add(support.Pair{Key: "ellps", Value: datum.EllipseID})
 		}
 		if datum.DefinitionString != "" {
-			op.ProjString.Args.AddList(datum.Definition)
+			op.ProjString.AddList(datum.Definition)
 		}
 	}
 
-	if op.ProjString.Args.ContainsKey("nadgrids") {
+	if op.ProjString.ContainsKey("nadgrids") {
 		op.DatumType = DatumTypeGridShift
 
-	} else if op.ProjString.Args.ContainsKey("catalog") {
+	} else if op.ProjString.ContainsKey("catalog") {
 		op.DatumType = DatumTypeGridShift
-		catalogName, ok := op.ProjString.Args.GetAsString("catalog")
+		catalogName, ok := op.ProjString.GetAsString("catalog")
 		if !ok {
 			return merror.New(merror.BadProjStringError)
 		}
 		op.CatalogName = catalogName
-		datumDate, ok := op.ProjString.Args.GetAsString("sdate")
+		datumDate, ok := op.ProjString.GetAsString("sdate")
 		if datumDate != "" {
 			op.DatumDate = support.ParseDate(datumDate)
 		}
 
-	} else if op.ProjString.Args.ContainsKey("towgs84") {
+	} else if op.ProjString.ContainsKey("towgs84") {
 
-		values, ok := op.ProjString.Args.GetAsFloats("towgs84")
+		values, ok := op.ProjString.GetAsFloats("towgs84")
 		if !ok {
 			return merror.New(merror.BadProjStringError)
 		}
@@ -357,7 +387,7 @@ func (op *Operation) readUnits(vertical bool) (float64, float64, error) {
 		toMeter = "v" + toMeter
 	}
 
-	name, ok := op.ProjString.Args.GetAsString(units)
+	name, ok := op.ProjString.GetAsString(units)
 	var s string
 	if ok {
 		u, ok := UnitInfoTable[name]
@@ -367,8 +397,8 @@ func (op *Operation) readUnits(vertical bool) (float64, float64, error) {
 		s = u.ToMetersS
 	}
 
-	if op.ProjString.Args.ContainsKey(toMeter) {
-		s, _ = op.ProjString.Args.GetAsString(toMeter)
+	if op.ProjString.ContainsKey(toMeter) {
+		s, _ = op.ProjString.GetAsString(toMeter)
 	}
 
 	if s != "" {
@@ -407,18 +437,18 @@ func (op *Operation) readUnits(vertical bool) (float64, float64, error) {
 func (op *Operation) processMisc() error {
 
 	/* Set PIN->geoc coordinate system */
-	op.Geoc = (op.Ellipsoid.Es != 0.0 && op.ProjString.Args.ContainsKey("geoc"))
+	op.Geoc = (op.Ellipsoid.Es != 0.0 && op.ProjString.ContainsKey("geoc"))
 
 	/* Over-ranging flag */
-	op.Over = op.ProjString.Args.ContainsKey("over")
+	op.Over = op.ProjString.ContainsKey("over")
 
 	/* Vertical datum geoid grids */
-	op.HasGeoidVgrids = op.ProjString.Args.ContainsKey("geoidgrids")
+	op.HasGeoidVgrids = op.ProjString.ContainsKey("geoidgrids")
 
 	/* Longitude center for wrapping */
-	op.IsLongWrapSet = op.ProjString.Args.ContainsKey("lon_wrap")
+	op.IsLongWrapSet = op.ProjString.ContainsKey("lon_wrap")
 	if op.IsLongWrapSet {
-		op.LongWrapCenter, _ = op.ProjString.Args.GetAsFloat("lon_wrap")
+		op.LongWrapCenter, _ = op.ProjString.GetAsFloat("lon_wrap")
 		/* Don't accept excessive values otherwise we might perform badly */
 		/* when correcting longitudes around it */
 		/* The test is written this way to error on long_wrap_center "=" NaN */
@@ -428,9 +458,9 @@ func (op *Operation) processMisc() error {
 	}
 
 	/* Axis orientation */
-	if op.ProjString.Args.ContainsKey("axis") {
+	if op.ProjString.ContainsKey("axis") {
 		axisLegal := "ewnsud"
-		axisArg, _ := op.ProjString.Args.GetAsString("axis")
+		axisArg, _ := op.ProjString.GetAsString("axis")
 		if len(axisArg) != 3 {
 			return merror.New(merror.ErrAxis)
 		}
@@ -446,40 +476,40 @@ func (op *Operation) processMisc() error {
 	}
 
 	/* Central meridian */
-	f, ok := op.ProjString.Args.GetAsFloat("lon_0")
+	f, ok := op.ProjString.GetAsFloat("lon_0")
 	if ok {
 		op.Lam0 = f
 	}
 
 	/* Central latitude */
-	f, ok = op.ProjString.Args.GetAsFloat("lat_0")
+	f, ok = op.ProjString.GetAsFloat("lat_0")
 	if ok {
 		op.Phi0 = f
 	}
 
 	/* False easting and northing */
-	f, ok = op.ProjString.Args.GetAsFloat("x_0")
+	f, ok = op.ProjString.GetAsFloat("x_0")
 	if ok {
 		op.X0 = f
 	}
-	f, ok = op.ProjString.Args.GetAsFloat("y_0")
+	f, ok = op.ProjString.GetAsFloat("y_0")
 	if ok {
 		op.Y0 = f
 	}
-	f, ok = op.ProjString.Args.GetAsFloat("z_0")
+	f, ok = op.ProjString.GetAsFloat("z_0")
 	if ok {
 		op.Z0 = f
 	}
-	f, ok = op.ProjString.Args.GetAsFloat("t_0")
+	f, ok = op.ProjString.GetAsFloat("t_0")
 	if ok {
 		op.T0 = f
 	}
 
 	/* General scaling factor */
-	if op.ProjString.Args.ContainsKey("k_0") {
-		op.K0, _ = op.ProjString.Args.GetAsFloat("k_0")
-	} else if op.ProjString.Args.ContainsKey("k") {
-		op.K0, _ = op.ProjString.Args.GetAsFloat("k")
+	if op.ProjString.ContainsKey("k_0") {
+		op.K0, _ = op.ProjString.GetAsFloat("k_0")
+	} else if op.ProjString.ContainsKey("k") {
+		op.K0, _ = op.ProjString.GetAsFloat("k")
 	} else {
 		op.K0 = 1.0
 	}
@@ -503,7 +533,7 @@ func (op *Operation) processMisc() error {
 	op.VFromMeter = from
 
 	/* Prime meridian */
-	name, ok := op.ProjString.Args.GetAsString("pm")
+	name, ok := op.ProjString.GetAsString("pm")
 	if ok {
 		var value string
 		pm, ok := PrimeMeridianTable[name]

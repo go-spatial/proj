@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-spatial/proj4go/core"
+	"github.com/go-spatial/proj4go/support"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 
 	fmt.Printf("string: %s\n", s)
 
-	_, err := core.NewProjString(s)
+	_, err := support.NewProjString(s)
 	if err != nil {
 		panic(err)
 	}

@@ -13,7 +13,7 @@ import (
 func TestFull(t *testing.T) {
 	assert := assert.New(t)
 
-	ps, err := core.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
+	ps, err := support.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
 	assert.NoError(err)
 
 	op, err := core.NewOperation(ps)
