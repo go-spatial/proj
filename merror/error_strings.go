@@ -22,4 +22,6 @@ var (
 	ErrUnitFactorLessThanZero = "ERR_UNIT_FACTOR_LESS_THAN_0"
 	ErrAxis                   = "ERR_AXIS"
 	ErrKLessThanZero          = "ERR_K_LESS_THAN_ZERO"
+	ErrCoordinateError        = "ErrCoordinateError"
+	ErrInvalidXOrY            = "ERR_INVALID_X_OR_Y"
 )
