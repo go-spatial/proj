@@ -81,8 +81,14 @@ func TestDDToR(t *testing.T) {
 	r := support.DDToR(15.0)
 	assert.InDelta(math.Pi/12.0, r, 1e-6)
 
+	deg := support.RToDD(math.Pi / 12.0)
+	assert.InDelta(15.0, deg, 1e-6)
+
 	r = support.DDToR(135.0)
 	assert.InDelta(math.Pi*0.75, r, 1e-6)
+
+	deg = support.RToDD(math.Pi * 0.75)
+	assert.InDelta(135.0, deg, 1e-6)
 }
 
 func TestDMSToR(t *testing.T) {

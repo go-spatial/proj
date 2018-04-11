@@ -83,6 +83,13 @@ func DDToR(deg float64) float64 {
 	return r
 }
 
+// RToDD converts radians to decimal degrees
+func RToDD(r float64) float64 {
+	const radToDeg = 1.0 / 0.017453292519943296
+	deg := r * radToDeg
+	return deg
+}
+
 // ConvertArcsecondsToRadians converts from arc secs to rads
 func ConvertArcsecondsToRadians(s float64) float64 {
 	// Pi/180/3600
