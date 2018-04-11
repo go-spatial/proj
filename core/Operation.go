@@ -161,6 +161,7 @@ func (op *Operation) Forward(input interface{}) (interface{}, error) {
 
 // Inverse executes an operation in reverse
 func (op *Operation) Inverse(input interface{}) (interface{}, error) {
+
 	input2, err := op.inversePrepare(input.(*CoordXY))
 	if err != nil {
 		return nil, err
@@ -738,7 +739,7 @@ func (op *Operation) inversePrepare(coo *CoordXY) (*CoordXY, error) {
 	//}
 
 	/* Handle remaining possible input types */
-	switch op.Left {
+	switch op.Right {
 
 	case IOUnitsWhatever:
 		return coo, nil
@@ -755,10 +756,11 @@ func (op *Operation) inversePrepare(coo *CoordXY) (*CoordXY, error) {
 		return coo, nil
 
 	case IOUnitsProjected, IOUnitsClassic:
+
 		coo.X = op.ToMeter*coo.X - op.X0
 		coo.Y = op.ToMeter*coo.Y - op.Y0
 		///////////coo.Z = op.VToMeter*coo.Z - op.Z0
-		if op.Left == IOUnitsProjected {
+		if op.Right == IOUnitsProjected {
 			return coo, nil
 		}
 
@@ -781,9 +783,9 @@ func (op *Operation) inverseFinalize(coo *CoordLP) (*CoordLP, error) {
 	//    return proj_coord_error ();
 	//}
 
-	if op.Right == IOUnitsAngular {
+	if op.Left == IOUnitsAngular {
 
-		if op.Left != IOUnitsAngular {
+		if op.Right != IOUnitsAngular {
 			/* Distance from central meridian, taking system zero meridian into account */
 			coo.Lam = coo.Lam + op.FromGreenwich + op.Lam0
 
