@@ -16,7 +16,7 @@ func TestFull(t *testing.T) {
 	ps, err := support.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
 	assert.NoError(err)
 
-	op, err := core.NewOperation(ps)
+	op, err := core.NewSystem(ps)
 	assert.NoError(err)
 
 	// 55d N, 12d E (lon lat) (lam phi)

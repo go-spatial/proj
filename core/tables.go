@@ -14,8 +14,8 @@ var EllipsoidTable map[string]*tables.RawEllipsoid
 // PrimeMeridianTable is the global list of all the known datums
 var PrimeMeridianTable map[string]*PrimeMeridian
 
-// OperationInfoTable is the global list of all the known operations
-var OperationInfoTable = map[string]*OperationInfo{}
+// OperationTable is the global list of all the known operations
+var OperationTable = map[string]*Operation{}
 
 // UnitInfoTable is the global list of all the known units
 var UnitInfoTable = map[string]*tables.RawUnit{}

@@ -8,17 +8,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOperation(t *testing.T) {
+func TestSystem(t *testing.T) {
 	assert := assert.New(t)
 
 	ps, err := support.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
 	assert.NoError(err)
 	assert.NotNil(ps)
 
-	op, err := core.NewOperation(ps)
+	op, err := core.NewSystem(ps)
 	assert.NoError(err)
 	assert.NotNil(op)
 }
+
 func TestProjStringValidation(t *testing.T) {
 	assert := assert.New(t)
 

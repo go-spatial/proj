@@ -35,17 +35,17 @@ const etmercOrder = 6
 //---------------------------------------------------------------------
 
 // UTMSetup operation
-func UTMSetup(*core.Operation) error {
+func UTMSetup(*core.System) error {
 	return nil
 }
 
 // UTMForward operation
-func UTMForward(*core.Operation, interface{}) (interface{}, error) {
+func UTMForward(*core.System, interface{}) (interface{}, error) {
 	return nil, nil
 }
 
 // UTMInverse operation
-func UTMInverse(*core.Operation, interface{}) (interface{}, error) {
+func UTMInverse(*core.System, interface{}) (interface{}, error) {
 	return nil, nil
 }
 
@@ -156,7 +156,7 @@ func clens(a []float64, lenA int, argR float64) float64 {
 }
 
 // ETMercForward operation -- Ellipsoidal, forward
-func etmercForward(P *core.Operation, xinput interface{}) (interface{}, error) {
+func etmercForward(P *core.System, xinput interface{}) (interface{}, error) {
 	lp := xinput.(*core.CoordLP)
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 	var Q = P.Q.(*etmercOpaque)
@@ -188,7 +188,7 @@ func etmercForward(P *core.Operation, xinput interface{}) (interface{}, error) {
 }
 
 // ETMercInverse operation (Ellipsoidal, inverse)
-func etmercInverse(P *core.Operation, xinput interface{}) (interface{}, error) {
+func etmercInverse(P *core.System, xinput interface{}) (interface{}, error) {
 	xy := xinput.(*core.CoordXY)
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
@@ -222,7 +222,7 @@ func etmercInverse(P *core.Operation, xinput interface{}) (interface{}, error) {
 }
 
 /* general initialization */
-func localSetup(P *core.Operation) error {
+func localSetup(P *core.System) error {
 	var f, n, np, Z float64
 
 	Q := &etmercOpaque{}
@@ -313,14 +313,14 @@ func localSetup(P *core.Operation) error {
 	return nil
 }
 
-func etmercSetup(op *core.Operation) error {
+func etmercSetup(op *core.System) error {
 
 	return localSetup(op)
 }
 
 /* utm uses etmerc for the underlying projection */
 
-func utmSetup(op *core.Operation) error {
+func utmSetup(op *core.System) error {
 
 	if op.Ellipsoid.Es == 0.0 {
 		return merror.New(merror.ErrEllipsoidUseRequired)

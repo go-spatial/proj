@@ -56,7 +56,7 @@ type Ellipsoid struct {
 }
 
 // NewEllipsoid creates an Ellipsoid and initializes it from the proj string
-func NewEllipsoid(op *Operation) (*Ellipsoid, error) {
+func NewEllipsoid(op *System) (*Ellipsoid, error) {
 	ellipsoid := &Ellipsoid{}
 
 	err := ellipsoid.initialize(op)
@@ -76,7 +76,7 @@ func (e *Ellipsoid) String() string {
 	return string(b)
 }
 
-func (e *Ellipsoid) initialize(op *Operation) error {
+func (e *Ellipsoid) initialize(op *System) error {
 
 	ps := op.ProjString
 
