@@ -13,15 +13,21 @@ func init() {
 		"Universal Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tzone= south",
 		core.CoordTypeLP, core.CoordTypeXY,
-		etmercForward, etmercInverse, utmSetup)
+		NewUtm,
+	)
 	core.RegisterOperation("etmerc",
 		"Extended Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tlat_ts=(0)\nlat_0=(0)",
 		core.CoordTypeLP, core.CoordTypeXY,
-		etmercForward, etmercInverse, etmercSetup)
+		NewEtMerc)
 }
 
-type etmercOpaque struct {
+// EtMerc implements core.IOperation and core.ConveryLPToXY
+type EtMerc struct {
+	core.OperationCommon
+	isUtm bool
+
+	// the "opaque" parts
 	Qn  float64    /* Merid. quad., scaled to the projection */
 	Zb  float64    /* Radius vector in polar coord. systems  */
 	cgb [6]float64 /* Constants for Gauss -> Geo lat */
@@ -30,24 +36,115 @@ type etmercOpaque struct {
 	gtu [6]float64 /* Constants for geo -> transv. merc. */
 }
 
+// NewEtMerc returns a new EtMerc
+func NewEtMerc(system *core.System) (core.IOperation, error) {
+	op := &EtMerc{
+		isUtm: false,
+	}
+	op.System = system
+	op.InputType = core.CoordTypeLP
+	op.OutputType = core.CoordTypeXY
+
+	return op, nil
+}
+
+// NewUtm returns a new EtMerc
+func NewUtm(system *core.System) (core.IOperation, error) {
+	xxx := &EtMerc{
+		isUtm: true,
+	}
+	xxx.System = system
+	xxx.InputType = core.CoordTypeLP
+	xxx.OutputType = core.CoordTypeXY
+
+	return xxx, nil
+}
+
+// Forward goes forewards
+func (xxx *EtMerc) Forward(sys *core.System, lp *core.CoordLP) (*core.CoordXY, error) {
+
+	lp, err := sys.ForwardPrepare(lp)
+	if err != nil {
+		return nil, err
+	}
+
+	xy, err := xxx.etmercForward(sys, lp)
+	if err != nil {
+		return nil, err
+	}
+
+	xy, err = sys.ForwardFinalize(xy)
+	if err != nil {
+		return nil, err
+	}
+
+	return xy, nil
+}
+
+// Inverse goes backwards
+func (xxx *EtMerc) Inverse(sys *core.System, xy *core.CoordXY) (*core.CoordLP, error) {
+
+	xy, err := sys.InversePrepare(xy)
+	if err != nil {
+		return nil, err
+	}
+
+	lp, err := xxx.etmercInverse(sys, xy)
+	if err != nil {
+		return nil, err
+	}
+
+	lp, err = sys.InverseFinalize(lp)
+	if err != nil {
+		return nil, err
+	}
+
+	return lp, nil
+}
+
+// ForwardAny is the generic/untyped entry point
+func (xxx *EtMerc) ForwardAny(sys *core.System, anyIn *core.CoordAny) (*core.CoordAny, error) {
+
+	lp := anyIn.ToLP()
+
+	xy, err := xxx.Forward(sys, lp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	anyOut := &core.CoordAny{}
+	anyOut.FromXY(xy)
+
+	return anyOut, nil
+}
+
+// InverseAny is the generic/untyped entry point
+func (xxx *EtMerc) InverseAny(sys *core.System, anyIn *core.CoordAny) (*core.CoordAny, error) {
+
+	xy := anyIn.ToXY()
+
+	lp, err := xxx.Inverse(sys, xy)
+
+	if err != nil {
+		return nil, err
+	}
+
+	anyOut := &core.CoordAny{}
+	anyOut.FromLP(lp)
+
+	return anyOut, nil
+}
+
+// Setup sets things up
+func (xxx *EtMerc) Setup(sys *core.System) error {
+	if xxx.isUtm {
+		return xxx.utmSetup(sys)
+	}
+	return xxx.etmercSetup(sys)
+}
+
 const etmercOrder = 6
-
-//---------------------------------------------------------------------
-
-// UTMSetup operation
-func UTMSetup(*core.System) error {
-	return nil
-}
-
-// UTMForward operation
-func UTMForward(*core.System, interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-// UTMInverse operation
-func UTMInverse(*core.System, interface{}) (interface{}, error) {
-	return nil, nil
-}
 
 //---------------------------------------------------------------------
 
@@ -156,10 +253,11 @@ func clens(a []float64, lenA int, argR float64) float64 {
 }
 
 // ETMercForward operation -- Ellipsoidal, forward
-func etmercForward(P *core.System, xinput interface{}) (interface{}, error) {
-	lp := xinput.(*core.CoordLP)
+func (xxx *EtMerc) etmercForward(P *core.System, lp *core.CoordLP) (*core.CoordXY, error) {
+
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
-	var Q = P.Q.(*etmercOpaque)
+
+	var Q = xxx
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
 	Cn := lp.Phi
 	Ce := lp.Lam
@@ -188,11 +286,11 @@ func etmercForward(P *core.System, xinput interface{}) (interface{}, error) {
 }
 
 // ETMercInverse operation (Ellipsoidal, inverse)
-func etmercInverse(P *core.System, xinput interface{}) (interface{}, error) {
-	xy := xinput.(*core.CoordXY)
+func (xxx *EtMerc) etmercInverse(P *core.System, xy *core.CoordXY) (*core.CoordLP, error) {
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
-	Q := P.Q.(*etmercOpaque)
+
+	Q := xxx
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
 	Cn := xy.Y
 	Ce := xy.X
@@ -222,11 +320,10 @@ func etmercInverse(P *core.System, xinput interface{}) (interface{}, error) {
 }
 
 /* general initialization */
-func localSetup(P *core.System) error {
+func (xxx *EtMerc) localSetup(P *core.System) error {
 	var f, n, np, Z float64
 
-	Q := &etmercOpaque{}
-	P.Q = Q
+	Q := xxx
 
 	PE := P.Ellipsoid
 
@@ -313,14 +410,14 @@ func localSetup(P *core.System) error {
 	return nil
 }
 
-func etmercSetup(op *core.System) error {
+func (xxx *EtMerc) etmercSetup(op *core.System) error {
 
-	return localSetup(op)
+	return xxx.localSetup(op)
 }
 
 /* utm uses etmerc for the underlying projection */
 
-func utmSetup(op *core.System) error {
+func (xxx *EtMerc) utmSetup(op *core.System) error {
 
 	if op.Ellipsoid.Es == 0.0 {
 		return merror.New(merror.ErrEllipsoidUseRequired)
@@ -354,5 +451,5 @@ func utmSetup(op *core.System) error {
 	op.K0 = 0.9996
 	op.Phi0 = 0.0
 
-	return localSetup(op)
+	return xxx.localSetup(op)
 }

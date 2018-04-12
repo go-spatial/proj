@@ -52,7 +52,7 @@ const epsLat = 1.0e-12
 // In PROJ.4, a "projection" is a conversion from "angular" input to "scaled linear" output.
 type System struct {
 	ProjString *support.ProjString
-	Info       *Operation
+	Info       *OperationDescription
 
 	//
 	// COORDINATE HANDLING
@@ -114,22 +114,17 @@ type System struct {
 	//struct _pj_gi *last_after_grid;     /* TODO: Description needed */
 	//PJ_Region     last_after_region;    /* TODO: Description needed */
 	//double        last_after_date;      /* TODO: Description needed */
-
-	//
-	// OPAQUE
-	//
-	Q interface{} // pointer to the "opaque" object
 }
 
 // NewSystem returns a new Operation object
-func NewSystem(ps *support.ProjString) (*System, error) {
+func NewSystem(ps *support.ProjString) (*System, IOperation, error) {
 
 	err := ValidateProjStringContents(ps)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	op := &System{
+	sys := &System{
 		ProjString: ps,
 		NeedEllps:  true,
 		Left:       IOUnitsAngular,
@@ -137,12 +132,22 @@ func NewSystem(ps *support.ProjString) (*System, error) {
 		Axis:       "enu",
 	}
 
-	err = op.initialize()
+	err = sys.initialize()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return op, nil
+	op, err := sys.Info.NewFunc(sys)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = op.Setup(sys)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return sys, op, nil
 }
 
 // ValidateProjStringContents checks to mke sure the contents are semantically valid
@@ -170,6 +175,7 @@ func ValidateProjStringContents(pl *support.ProjString) error {
 	return nil
 }
 
+/*
 // Forward executes an operation
 func (op *System) Forward(input interface{}) (interface{}, error) {
 
@@ -207,6 +213,7 @@ func (op *System) Inverse(input interface{}) (interface{}, error) {
 
 	return output2, nil
 }
+*/
 
 func (op *System) String() string {
 	b, err := json.MarshalIndent(op, "", " ")
@@ -220,7 +227,7 @@ func (op *System) String() string {
 func (op *System) initialize() error {
 
 	projName, _ := op.ProjString.GetAsString("proj")
-	opInfo, ok := OperationTable[projName]
+	opInfo, ok := OperationDescriptionTable[projName]
 	if !ok {
 		return merror.New(merror.BadProjStringError)
 	}
@@ -253,12 +260,14 @@ func (op *System) initialize() error {
 		return err
 	}
 
-	// do setup work specific to this operation
-	// (locate_constructor)
-	err = op.Info.setup(op)
-	if err != nil {
-		return err
-	}
+	/*
+		// do setup work specific to this operation
+		// (locate_constructor)
+		err = op.Info.setup(op)
+		if err != nil {
+			return err
+		}
+	*/
 
 	return nil
 }
@@ -556,7 +565,8 @@ func (op *System) processMisc() error {
 	return nil
 }
 
-func (op *System) forwardPrepare(lp *CoordLP) (*CoordLP, error) {
+// ForwardPrepare is called just before calling Forward()
+func (op *System) ForwardPrepare(lp *CoordLP) (*CoordLP, error) {
 
 	if math.MaxFloat64 == lp.Lam {
 		return nil, merror.New(merror.ErrCoordinateError)
@@ -632,7 +642,8 @@ func (op *System) forwardPrepare(lp *CoordLP) (*CoordLP, error) {
 	return lp, nil
 }
 
-func (op *System) forwardFinalize(coo *CoordXY) (*CoordXY, error) {
+// ForwardFinalize is called just after calling Forward()
+func (op *System) ForwardFinalize(coo *CoordXY) (*CoordXY, error) {
 
 	switch op.Right {
 
@@ -713,7 +724,8 @@ func (op *System) forwardFinalize(coo *CoordXY) (*CoordXY, error) {
 	return coo, nil
 }
 
-func (op *System) inversePrepare(coo *CoordXY) (*CoordXY, error) {
+// InversePrepare is called just before calling Inverse()
+func (op *System) InversePrepare(coo *CoordXY) (*CoordXY, error) {
 	if coo.X == math.MaxFloat64 {
 		return nil, merror.New(merror.ErrInvalidXOrY)
 	}
@@ -807,7 +819,8 @@ func (op *System) inversePrepare(coo *CoordXY) (*CoordXY, error) {
 	return coo, nil
 }
 
-func (op *System) inverseFinalize(coo *CoordLP) (*CoordLP, error) {
+// InverseFinalize is called just after calling Inverse()
+func (op *System) InverseFinalize(coo *CoordLP) (*CoordLP, error) {
 	//if (coo.xyz.x == HUGE_VAL) {
 	//    proj_errno_set (P, PJD_ERR_INVALID_X_OR_Y);
 	//    return proj_coord_error ();

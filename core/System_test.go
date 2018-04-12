@@ -15,8 +15,9 @@ func TestSystem(t *testing.T) {
 	assert.NoError(err)
 	assert.NotNil(ps)
 
-	op, err := core.NewSystem(ps)
+	sys, op, err := core.NewSystem(ps)
 	assert.NoError(err)
+	assert.NotNil(sys)
 	assert.NotNil(op)
 }
 

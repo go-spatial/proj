@@ -16,22 +16,25 @@ func TestFull(t *testing.T) {
 	ps, err := support.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
 	assert.NoError(err)
 
-	op, err := core.NewSystem(ps)
+	sys, opx, err := core.NewSystem(ps)
 	assert.NoError(err)
+
+	op := opx.(core.IConvertLPToXY)
 
 	// 55d N, 12d E (lon lat) (lam phi)
 	input := &core.CoordLP{Lam: support.DDToR(12.0), Phi: support.DDToR(55.0)}
-	output, err := op.Forward(input)
+	output, err := op.Forward(sys, input)
 	assert.NoError(err)
 
-	x, y := output.(*core.CoordXY).X, output.(*core.CoordXY).Y
+	x, y := output.X, output.Y
 	assert.InDelta(691875.63, x, 1e-2)
 	assert.InDelta(6098907.83, y, 1e-2)
 
-	output, err = op.Inverse(output)
+	input2 := output
+	output2, err := op.Inverse(sys, input2)
 	assert.NoError(err)
 
-	l, p := output.(*core.CoordLP).Lam, output.(*core.CoordLP).Phi
+	l, p := output2.Lam, output2.Phi
 	l = support.RToDD(l)
 	p = support.RToDD(p)
 	assert.InDelta(12.0, l, 1e-6)

@@ -27,23 +27,23 @@ type CoordAny struct{ v [4]float64 }
 //---------------------------------------------------------------------
 
 // ToLP returns a CoordLP
-func (c CoordAny) ToLP() CoordLP {
-	return CoordLP{Lam: c.v[0], Phi: c.v[1]}
+func (c *CoordAny) ToLP() *CoordLP {
+	return &CoordLP{Lam: c.v[0], Phi: c.v[1]}
 }
 
 // FromLP sets this CoordAny
-func (c CoordAny) FromLP(lp CoordLP) {
+func (c *CoordAny) FromLP(lp *CoordLP) {
 	c.v[0] = lp.Lam
 	c.v[1] = lp.Phi
 }
 
 // ToXY returns a CoordXY
-func (c CoordAny) ToXY() CoordXY {
-	return CoordXY{X: c.v[0], Y: c.v[1]}
+func (c *CoordAny) ToXY() *CoordXY {
+	return &CoordXY{X: c.v[0], Y: c.v[1]}
 }
 
 // FromXY sets this CoordAny
-func (c CoordAny) FromXY(xy CoordXY) {
+func (c *CoordAny) FromXY(xy *CoordXY) {
 	c.v[0] = xy.Y
 	c.v[1] = xy.Y
 }
