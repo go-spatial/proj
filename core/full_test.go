@@ -18,12 +18,15 @@ func TestFull(t *testing.T) {
 
 	sys, opx, err := core.NewSystem(ps)
 	assert.NoError(err)
+	assert.NotNil(sys)
+	assert.NotNil(opx)
+	assert.EqualValues(sys, opx.GetSystem())
 
 	op := opx.(core.IConvertLPToXY)
 
 	// 55d N, 12d E (lon lat) (lam phi)
 	input := &core.CoordLP{Lam: support.DDToR(12.0), Phi: support.DDToR(55.0)}
-	output, err := op.Forward(sys, input)
+	output, err := op.Forward(input)
 	assert.NoError(err)
 
 	x, y := output.X, output.Y
@@ -31,7 +34,7 @@ func TestFull(t *testing.T) {
 	assert.InDelta(6098907.83, y, 1e-2)
 
 	input2 := output
-	output2, err := op.Inverse(sys, input2)
+	output2, err := op.Inverse(input2)
 	assert.NoError(err)
 
 	l, p := output2.Lam, output2.Phi

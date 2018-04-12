@@ -61,9 +61,11 @@ func NewUtm(system *core.System) (core.IOperation, error) {
 }
 
 // Forward goes forewards
-func (xxx *EtMerc) Forward(sys *core.System, lp *core.CoordLP) (*core.CoordXY, error) {
+func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 
-	lp, err := sys.ForwardPrepare(lp)
+	sys := xxx.GetSystem()
+
+	lp, err := xxx.ForwardPrepare(lp)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +75,7 @@ func (xxx *EtMerc) Forward(sys *core.System, lp *core.CoordLP) (*core.CoordXY, e
 		return nil, err
 	}
 
-	xy, err = sys.ForwardFinalize(xy)
+	xy, err = xxx.ForwardFinalize(xy)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +84,11 @@ func (xxx *EtMerc) Forward(sys *core.System, lp *core.CoordLP) (*core.CoordXY, e
 }
 
 // Inverse goes backwards
-func (xxx *EtMerc) Inverse(sys *core.System, xy *core.CoordXY) (*core.CoordLP, error) {
+func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
-	xy, err := sys.InversePrepare(xy)
+	sys := xxx.GetSystem()
+
+	xy, err := xxx.InversePrepare(xy)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +98,7 @@ func (xxx *EtMerc) Inverse(sys *core.System, xy *core.CoordXY) (*core.CoordLP, e
 		return nil, err
 	}
 
-	lp, err = sys.InverseFinalize(lp)
+	lp, err = xxx.InverseFinalize(lp)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +107,11 @@ func (xxx *EtMerc) Inverse(sys *core.System, xy *core.CoordXY) (*core.CoordLP, e
 }
 
 // ForwardAny is the generic/untyped entry point
-func (xxx *EtMerc) ForwardAny(sys *core.System, anyIn *core.CoordAny) (*core.CoordAny, error) {
+func (xxx *EtMerc) ForwardAny(anyIn *core.CoordAny) (*core.CoordAny, error) {
 
 	lp := anyIn.ToLP()
 
-	xy, err := xxx.Forward(sys, lp)
+	xy, err := xxx.Forward(lp)
 
 	if err != nil {
 		return nil, err
@@ -120,11 +124,11 @@ func (xxx *EtMerc) ForwardAny(sys *core.System, anyIn *core.CoordAny) (*core.Coo
 }
 
 // InverseAny is the generic/untyped entry point
-func (xxx *EtMerc) InverseAny(sys *core.System, anyIn *core.CoordAny) (*core.CoordAny, error) {
+func (xxx *EtMerc) InverseAny(anyIn *core.CoordAny) (*core.CoordAny, error) {
 
 	xy := anyIn.ToXY()
 
-	lp, err := xxx.Inverse(sys, xy)
+	lp, err := xxx.Inverse(xy)
 
 	if err != nil {
 		return nil, err
@@ -137,7 +141,10 @@ func (xxx *EtMerc) InverseAny(sys *core.System, anyIn *core.CoordAny) (*core.Coo
 }
 
 // Setup sets things up
-func (xxx *EtMerc) Setup(sys *core.System) error {
+func (xxx *EtMerc) Setup() error {
+
+	sys := xxx.GetSystem()
+
 	if xxx.isUtm {
 		return xxx.utmSetup(sys)
 	}
