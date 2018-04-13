@@ -137,12 +137,7 @@ func NewSystem(ps *support.ProjString) (*System, IOperation, error) {
 		return nil, nil, err
 	}
 
-	op, err := sys.Info.NewFunc(sys)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = op.Setup()
+	op, err := sys.Info.Create(sys)
 	if err != nil {
 		return nil, nil, err
 	}

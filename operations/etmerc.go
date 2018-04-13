@@ -12,17 +12,18 @@ func init() {
 	core.RegisterOperation("utm",
 		"Universal Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tzone= south",
-		core.CoordTypeLP, core.CoordTypeXY,
+		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewUtm,
 	)
 	core.RegisterOperation("etmerc",
 		"Extended Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tlat_ts=(0)\nlat_0=(0)",
-		core.CoordTypeLP, core.CoordTypeXY,
-		NewEtMerc)
+		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
+		NewEtMerc,
+	)
 }
 
-// EtMerc implements core.IOperation and core.ConveryLPToXY
+// EtMerc implements core.IOperation and core.ConvertLPToXY
 type EtMerc struct {
 	core.OperationCommon
 	isUtm bool
@@ -37,40 +38,44 @@ type EtMerc struct {
 }
 
 // NewEtMerc returns a new EtMerc
-func NewEtMerc(system *core.System) (core.IOperation, error) {
-	op := &EtMerc{
+func NewEtMerc(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+	xxx := &EtMerc{
 		isUtm: false,
 	}
-	op.System = system
-	op.InputType = core.CoordTypeLP
-	op.OutputType = core.CoordTypeXY
+	xxx.System = system
 
-	return op, nil
+	err := xxx.etmercSetup(system)
+	if err != nil {
+		return nil, err
+	}
+	return xxx, nil
 }
 
 // NewUtm returns a new EtMerc
-func NewUtm(system *core.System) (core.IOperation, error) {
+func NewUtm(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
 	xxx := &EtMerc{
 		isUtm: true,
 	}
 	xxx.System = system
-	xxx.InputType = core.CoordTypeLP
-	xxx.OutputType = core.CoordTypeXY
 
+	err := xxx.utmSetup(system)
+	if err != nil {
+		return nil, err
+	}
 	return xxx, nil
 }
 
+//---------------------------------------------------------------------
+
 // Forward goes forewards
 func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
-
-	sys := xxx.GetSystem()
 
 	lp, err := xxx.ForwardPrepare(lp)
 	if err != nil {
 		return nil, err
 	}
 
-	xy, err := xxx.etmercForward(sys, lp)
+	xy, err := xxx.etmercForward(lp)
 	if err != nil {
 		return nil, err
 	}
@@ -86,14 +91,12 @@ func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 // Inverse goes backwards
 func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
-	sys := xxx.GetSystem()
-
 	xy, err := xxx.InversePrepare(xy)
 	if err != nil {
 		return nil, err
 	}
 
-	lp, err := xxx.etmercInverse(sys, xy)
+	lp, err := xxx.etmercInverse(xy)
 	if err != nil {
 		return nil, err
 	}
@@ -104,51 +107,6 @@ func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 	}
 
 	return lp, nil
-}
-
-// ForwardAny is the generic/untyped entry point
-func (xxx *EtMerc) ForwardAny(anyIn *core.CoordAny) (*core.CoordAny, error) {
-
-	lp := anyIn.ToLP()
-
-	xy, err := xxx.Forward(lp)
-
-	if err != nil {
-		return nil, err
-	}
-
-	anyOut := &core.CoordAny{}
-	anyOut.FromXY(xy)
-
-	return anyOut, nil
-}
-
-// InverseAny is the generic/untyped entry point
-func (xxx *EtMerc) InverseAny(anyIn *core.CoordAny) (*core.CoordAny, error) {
-
-	xy := anyIn.ToXY()
-
-	lp, err := xxx.Inverse(xy)
-
-	if err != nil {
-		return nil, err
-	}
-
-	anyOut := &core.CoordAny{}
-	anyOut.FromLP(lp)
-
-	return anyOut, nil
-}
-
-// Setup sets things up
-func (xxx *EtMerc) Setup() error {
-
-	sys := xxx.GetSystem()
-
-	if xxx.isUtm {
-		return xxx.utmSetup(sys)
-	}
-	return xxx.etmercSetup(sys)
 }
 
 const etmercOrder = 6
@@ -260,7 +218,7 @@ func clens(a []float64, lenA int, argR float64) float64 {
 }
 
 // ETMercForward operation -- Ellipsoidal, forward
-func (xxx *EtMerc) etmercForward(P *core.System, lp *core.CoordLP) (*core.CoordXY, error) {
+func (xxx *EtMerc) etmercForward(lp *core.CoordLP) (*core.CoordXY, error) {
 
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
@@ -293,7 +251,7 @@ func (xxx *EtMerc) etmercForward(P *core.System, lp *core.CoordLP) (*core.CoordX
 }
 
 // ETMercInverse operation (Ellipsoidal, inverse)
-func (xxx *EtMerc) etmercInverse(P *core.System, xy *core.CoordXY) (*core.CoordLP, error) {
+func (xxx *EtMerc) etmercInverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 

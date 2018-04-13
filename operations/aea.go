@@ -4,27 +4,117 @@ import (
 	"math"
 
 	"github.com/go-spatial/proj4go/core"
+	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj4go/support"
 )
 
 func init() {
 	core.RegisterOperation("aea",
 		"Albers Equal Area",
 		"\n\tConic Sph&Ell\n\tlat_1= lat_2=",
-		core.CoordTypeLP, core.CoordTypeXY,
+		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewAea,
 	)
 	core.RegisterOperation("leac",
 		"Lambert Equal Area Conic",
 		"\n\tConic, Sph&Ell\n\tlat_1= south",
-		core.CoordTypeLP, core.CoordTypeXY,
+		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewLeac)
 }
 
+// Aea implements core.IOperation and core.ConvertLPToXY
+type Aea struct {
+	core.OperationCommon
+	isLambert bool
+
+	// the "opaque" parts
+
+	ec     float64
+	n      float64
+	c      float64
+	dd     float64
+	n2     float64
+	rho0   float64
+	rho    float64
+	phi1   float64
+	phi2   float64
+	en     []float64
+	ellips bool
+}
+
 // NewAea is
-func NewAea(system *core.System) (core.IOperation, error) { return nil, nil }
+func NewAea(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+	xxx := &Aea{
+		isLambert: false,
+	}
+	xxx.System = system
+
+	err := xxx.aeaSetup(system)
+	if err != nil {
+		return nil, err
+	}
+	return xxx, nil
+}
 
 // NewLeac is too
-func NewLeac(system *core.System) (core.IOperation, error) { return nil, nil }
+func NewLeac(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+	xxx := &Aea{
+		isLambert: true,
+	}
+	xxx.System = system
+
+	err := xxx.leacSetup(system)
+	if err != nil {
+		return nil, err
+	}
+	return xxx, nil
+}
+
+//---------------------------------------------------------------------
+
+// Forward goes forewards
+func (aea *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
+
+	lp, err := aea.ForwardPrepare(lp)
+	if err != nil {
+		return nil, err
+	}
+
+	xy, err := aea.aeaForward(lp)
+	if err != nil {
+		return nil, err
+	}
+
+	xy, err = aea.ForwardFinalize(xy)
+	if err != nil {
+		return nil, err
+	}
+
+	return xy, nil
+}
+
+// Inverse goes backwards
+func (aea *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
+
+	xy, err := aea.InversePrepare(xy)
+	if err != nil {
+		return nil, err
+	}
+
+	lp, err := aea.aeaInverse(xy)
+	if err != nil {
+		return nil, err
+	}
+
+	lp, err = aea.InverseFinalize(lp)
+	if err != nil {
+		return nil, err
+	}
+
+	return lp, nil
+}
+
+//---------------------------------------------------------------------
 
 const eps10 = 1.e-10
 const tol7 = 1.e-7
@@ -63,143 +153,169 @@ func phi1(qs, Te, tOneEs float64) float64 {
 	return math.MaxFloat64
 }
 
-/*
- struct pj_opaque {
-	 double  ec;
-	 double  n;
-	 double  c;
-	 double  dd;
-	 double  n2;
-	 double  rho0;
-	 double  rho;
-	 double  phi1;
-	 double  phi2;
-	 double  *en;
-	 int     ellips;
- };
+func (aea *Aea) localSetup(sys *core.System) error {
+	var cosphi, sinphi float64
+	var secant bool
 
+	Q := aea
+	P := aea.System
+	PE := P.Ellipsoid
 
- static XY e_forward (LP lp, PJ *P) {
-	 XY xy = {0.0,0.0};
-	 struct pj_opaque *Q = P->opaque;
-	 Q->rho = Q->c - (Q->ellips ? Q->n * pj_qsfn(sin(lp.phi), P->e, P->one_es) : Q->n2 * sin(lp.phi));;
-	 if (Q->rho < 0.) {
-		 proj_errno_set(P, PJD_ERR_TOLERANCE_CONDITION);
-		 return xy;
-	 }
-	 Q->rho = Q->dd * sqrt(Q->rho);
-	 xy.x = Q->rho * sin( lp.lam *= Q->n );
-	 xy.y = Q->rho0 - Q->rho * cos(lp.lam);
-	 return xy;
- }
+	if math.Abs(Q.phi1+Q.phi2) < eps10 {
+		return merror.New(merror.ErrConicLatEqual)
+	}
+	sinphi = math.Sin(Q.phi1)
+	Q.n = sinphi
+	cosphi = math.Cos(Q.phi1)
+	secant = math.Abs(Q.phi1-Q.phi2) >= eps10
+	Q.ellips = (P.Ellipsoid.Es > 0.0)
+	if Q.ellips {
+		var ml1, m1 float64
 
+		Q.en = support.Enfn(PE.Es)
+		m1 = support.Msfn(sinphi, cosphi, PE.Es)
+		ml1 = support.Qsfn(sinphi, PE.E, PE.OneEs)
+		if secant { // secant cone
+			var ml2, m2 float64
 
- static LP e_inverse (XY xy, PJ *P) {
-	 LP lp = {0.0,0.0};
-	 struct pj_opaque *Q = P->opaque;
-	 if( (Q->rho = hypot(xy.x, xy.y = Q->rho0 - xy.y)) != 0.0 ) {
-		 if (Q->n < 0.) {
-			 Q->rho = -Q->rho;
-			 xy.x = -xy.x;
-			 xy.y = -xy.y;
-		 }
-		 lp.phi =  Q->rho / Q->dd;
-		 if (Q->ellips) {
-			 lp.phi = (Q->c - lp.phi * lp.phi) / Q->n;
-			 if (fabs(Q->ec - fabs(lp.phi)) > TOL7) {
-				 if ((lp.phi = phi1_(lp.phi, P->e, P->one_es)) == HUGE_VAL) {
-					 proj_errno_set(P, PJD_ERR_TOLERANCE_CONDITION);
-					 return lp;
-				 }
-			 } else
-				 lp.phi = lp.phi < 0. ? -M_HALFPI : M_HALFPI;
-		 } else if (fabs(lp.phi = (Q->c - lp.phi * lp.phi) / Q->n2) <= 1.)
-			 lp.phi = asin(lp.phi);
-		 else
-			 lp.phi = lp.phi < 0. ? -M_HALFPI : M_HALFPI;
-		 lp.lam = atan2(xy.x, xy.y) / Q->n;
-	 } else {
-		 lp.lam = 0.;
-		 lp.phi = Q->n > 0. ? M_HALFPI : - M_HALFPI;
-	 }
-	 return lp;
- }
+			sinphi = math.Sin(Q.phi2)
+			cosphi = math.Cos(Q.phi2)
+			m2 = support.Msfn(sinphi, cosphi, PE.Es)
+			ml2 = support.Qsfn(sinphi, PE.E, PE.OneEs)
+			if ml2 == ml1 {
+				return merror.New(merror.ErrAeaSetupFailed)
+			}
 
+			Q.n = (m1*m1 - m2*m2) / (ml2 - ml1)
+		}
+		Q.ec = 1. - .5*PE.OneEs*math.Log((1.-PE.E)/
+			(1.+PE.E))/PE.E
+		Q.c = m1*m1 + Q.n*ml1
+		Q.dd = 1. / Q.n
+		Q.rho0 = Q.dd * math.Sqrt(Q.c-Q.n*support.Qsfn(math.Sin(P.Phi0),
+			PE.E, PE.OneEs))
+	} else {
+		if secant {
+			Q.n = .5 * (Q.n + math.Sin(Q.phi2))
+		}
+		Q.n2 = Q.n + Q.n
+		Q.c = cosphi*cosphi + Q.n2*sinphi
+		Q.dd = 1. / Q.n
+		Q.rho0 = Q.dd * math.Sqrt(Q.c-Q.n2*math.Sin(P.Phi0))
+	}
 
+	return nil
+}
 
- static PJ *setup(PJ *P) {
-	 double cosphi, sinphi;
-	 int secant;
-	 struct pj_opaque *Q = P->opaque;
+// Forward goes frontwords
+func (aea *Aea) aeaForward(lp *core.CoordLP) (*core.CoordXY, error) {
+	xy := &core.CoordXY{X: 0.0, Y: 0.0}
+	Q := aea
+	PE := aea.System.Ellipsoid
 
-	 P->inv = e_inverse;
-	 P->fwd = e_forward;
+	var t float64
+	if Q.ellips {
+		t = Q.n * support.Qsfn(math.Sin(lp.Phi), PE.E, PE.OneEs)
+	} else {
+		t = Q.n2 * math.Sin(lp.Phi)
+	}
+	Q.rho = Q.c - t
+	if Q.rho < 0. {
+		return xy, merror.New(merror.ErrToleranceCondition)
+	}
+	Q.rho = Q.dd * math.Sqrt(Q.rho)
+	lp.Lam *= Q.n
+	xy.X = Q.rho * math.Sin(lp.Lam)
+	xy.Y = Q.rho0 - Q.rho*math.Cos(lp.Lam)
+	return xy, nil
+}
 
-	 if (fabs(Q->phi1 + Q->phi2) < EPS10)
-		 return destructor(P, PJD_ERR_CONIC_LAT_EQUAL);
-	 Q->n = sinphi = sin(Q->phi1);
-	 cosphi = cos(Q->phi1);
-	 secant = fabs(Q->phi1 - Q->phi2) >= EPS10;
-	 if( (Q->ellips = (P->es > 0.))) {
-		 double ml1, m1;
+// Inverse goes backwards
+func (aea *Aea) aeaInverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
-		 if (!(Q->en = pj_enfn(P->es)))
-			 return destructor(P, 0);
-		 m1 = pj_msfn(sinphi, cosphi, P->es);
-		 ml1 = pj_qsfn(sinphi, P->e, P->one_es);
-		 if (secant) { // secant cone
-			 double ml2, m2;
+	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
+	Q := aea
+	PE := aea.System.Ellipsoid
 
-			 sinphi = sin(Q->phi2);
-			 cosphi = cos(Q->phi2);
-			 m2 = pj_msfn(sinphi, cosphi, P->es);
-			 ml2 = pj_qsfn(sinphi, P->e, P->one_es);
-			 if (ml2 == ml1)
-				 return destructor(P, 0);
+	xy.Y = Q.rho0 - xy.Y
+	Q.rho = math.Hypot(xy.X, xy.Y)
+	if Q.rho != 0.0 {
+		if Q.n < 0. {
+			Q.rho = -Q.rho
+			xy.X = -xy.X
+			xy.Y = -xy.Y
+		}
+		lp.Phi = Q.rho / Q.dd
+		if Q.ellips {
+			lp.Phi = (Q.c - lp.Phi*lp.Phi) / Q.n
+			if math.Abs(Q.ec-math.Abs(lp.Phi)) > tol7 {
+				lp.Phi = phi1(lp.Phi, PE.E, PE.OneEs)
+				if lp.Phi == math.MaxFloat64 {
+					return lp, merror.New(merror.ErrToleranceCondition)
+				}
+			} else {
+				if lp.Phi < 0. {
+					lp.Phi = -support.PiOverTwo
+				} else {
+					lp.Phi = support.PiOverTwo
+				}
+			}
+		} else {
+			lp.Phi = (Q.c - lp.Phi*lp.Phi) / Q.n2
+			if math.Abs(lp.Phi) <= 1. {
+				lp.Phi = math.Asin(lp.Phi)
+			} else {
+				if lp.Phi < 0. {
+					lp.Phi = -support.PiOverTwo
+				} else {
+					lp.Phi = support.PiOverTwo
+				}
+			}
+		}
+		lp.Lam = math.Atan2(xy.X, xy.Y) / Q.n
+	} else {
+		lp.Lam = 0.
+		if Q.n > 0. {
+			lp.Phi = support.PiOverTwo
+		} else {
+			lp.Phi = -support.PiOverTwo
+		}
+	}
+	return lp, nil
+}
 
-			 Q->n = (m1 * m1 - m2 * m2) / (ml2 - ml1);
-		 }
-		 Q->ec = 1. - .5 * P->one_es * log((1. - P->e) /
-			 (1. + P->e)) / P->e;
-		 Q->c = m1 * m1 + Q->n * ml1;
-		 Q->dd = 1. / Q->n;
-		 Q->rho0 = Q->dd * sqrt(Q->c - Q->n * pj_qsfn(sin(P->phi0),
-			 P->e, P->one_es));
-	 } else {
-		 if (secant) Q->n = .5 * (Q->n + sin(Q->phi2));
-		 Q->n2 = Q->n + Q->n;
-		 Q->c = cosphi * cosphi + Q->n2 * sinphi;
-		 Q->dd = 1. / Q->n;
-		 Q->rho0 = Q->dd * sqrt(Q->c - Q->n2 * sin(P->phi0));
-	 }
+func (aea *Aea) aeaSetup(sys *core.System) error {
 
-	 return P;
- }
+	lat1, ok := aea.System.ProjString.GetAsFloat("lat_1")
+	if !ok {
+		lat1 = 0.0
+	}
+	lat2, ok := aea.System.ProjString.GetAsFloat("lat_2")
+	if !ok {
+		lat2 = 0.0
+	}
 
+	aea.phi1 = lat1
+	aea.phi2 = lat2
 
- PJ *PROJECTION(aea) {
-	 struct pj_opaque *Q = pj_calloc (1, sizeof (struct pj_opaque));
-	 if (0==Q)
-		 return pj_default_destructor (P, ENOMEM);
-	 P->opaque = Q;
-	 P->destructor = destructor;
+	return aea.localSetup(aea.System)
+}
 
-	 Q->phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
-	 Q->phi2 = pj_param(P->ctx, P->params, "rlat_2").f;
-	 return setup(P);
- }
+func (aea *Aea) leacSetup(sys *core.System) error {
 
+	lat1, ok := aea.System.ProjString.GetAsFloat("lat_1")
+	if !ok {
+		lat1 = 0.0
+	}
 
- PJ *PROJECTION(leac) {
-	 struct pj_opaque *Q = pj_calloc (1, sizeof (struct pj_opaque));
-	 if (0==Q)
-		 return pj_default_destructor (P, ENOMEM);
-	 P->opaque = Q;
-	 P->destructor = destructor;
+	south := support.PiOverTwo
+	_, ok = aea.System.ProjString.GetAsInt("south")
+	if !ok {
+		south = -support.PiOverTwo
+	}
 
-	 Q->phi2 = pj_param(P->ctx, P->params, "rlat_1").f;
-	 Q->phi1 = pj_param(P->ctx, P->params, "bsouth").i ? - M_HALFPI: M_HALFPI;
-	 return setup(P);
- }
+	aea.phi2 = lat1
+	aea.phi1 = south
 
-*/
+	return aea.localSetup(aea.System)
+}

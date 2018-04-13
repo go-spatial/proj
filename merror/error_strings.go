@@ -24,4 +24,10 @@ var (
 	ErrKLessThanZero          = "ERR_K_LESS_THAN_ZERO"
 	ErrCoordinateError        = "ErrCoordinateError"
 	ErrInvalidXOrY            = "ERR_INVALID_X_OR_Y"
+	ErrConicLatEqual          = "ErrConicLatEqual"
+	ErrAeaSetupFailed         = "ErrAeaSetupFailed"
+	ErrInvMlfn                = "ErrInvMlfn"
+	ErrAeaProjString          = "ErrAeaProjString"
+	ErrLatTSLargerThan90      = "ErrLatTSLargerThan90"
+	ErrPhi2                   = "ErrPhi2"
 )

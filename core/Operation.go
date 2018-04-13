@@ -7,31 +7,42 @@ import (
 	"github.com/go-spatial/proj4go/support"
 )
 
+// OperationType is the enum for the different kinds of conversions and transforms
+type OperationType int
+
+// The operation type
+const (
+	OperationTypeInvalid OperationType = iota
+	OperationTypeConversion
+	OperationTypeTransformation
+)
+
 // IOperation is for all operations
 type IOperation interface {
 	GetSystem() *System
-	GetSignature() (CoordType, CoordType)
-	ForwardAny(*CoordAny) (*CoordAny, error)
-	InverseAny(*CoordAny) (*CoordAny, error)
-	Setup() error
+	GetSignature() (OperationType, CoordType, CoordType)
 }
+
+//---------------------------------------------------------------------
 
 // OperationCommon provides some common fields an implementation of IOperation will need
 type OperationCommon struct {
-	System     *System
-	InputType  CoordType
-	OutputType CoordType
+	System      *System
+	Description *OperationDescription
 }
 
 // GetSystem returns the System
 func (opcommon OperationCommon) GetSystem() *System { return opcommon.System }
 
-// GetSignature returns the input type and output type
-func (opcommon OperationCommon) GetSignature() (CoordType, CoordType) { 
-	return opcommon.InputType, opcommon.OutputType
- }
+// GetSignature returns the operation type, the input type, and the output type
+func (opcommon OperationCommon) GetSignature() (OperationType, CoordType, CoordType) {
+	d := opcommon.Description
+	return d.OperationType, d.InputType, d.OutputType
+}
 
-// IConvertLPToXY is just for 2D LP->XY conversions
+//---------------------------------------------------------------------
+
+// IConvertLPToXY is for 2D LP->XY conversions
 type IConvertLPToXY interface {
 	Forward(*CoordLP) (*CoordXY, error)
 	Inverse(*CoordXY) (*CoordLP, error)

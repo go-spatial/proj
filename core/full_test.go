@@ -30,7 +30,7 @@ func TestUtm(t *testing.T) {
 	assert.NoError(err)
 
 	x, y := output.X, output.Y
-	assert.InDelta(691875.63, x, 1e-2)
+	assert.InDelta(691875.63, x, 1e-2) // TODO: should be like 1e-8?
 	assert.InDelta(6098907.83, y, 1e-2)
 
 	input2 := output
@@ -40,8 +40,8 @@ func TestUtm(t *testing.T) {
 	l, p := output2.Lam, output2.Phi
 	l = support.RToDD(l)
 	p = support.RToDD(p)
-	assert.InDelta(12.0, l, 1e-6)
-	assert.InDelta(55.0, p, 1e-6)
+	assert.InDelta(12.0, l, 1e-8)
+	assert.InDelta(55.0, p, 1e-8)
 }
 
 func TestEtMerc(t *testing.T) {
@@ -63,8 +63,8 @@ func TestEtMerc(t *testing.T) {
 	assert.NoError(err)
 
 	x, y := output.X, output.Y
-	assert.InDelta(222650.796797586, x, 1e-2)
-	assert.InDelta(110642.229411933, y, 1e-2)
+	assert.InDelta(222650.796797586, x, 1e-8)
+	assert.InDelta(110642.229411933, y, 1e-8)
 
 	input2 := output
 	output2, err := op.Inverse(input2)
@@ -73,6 +73,22 @@ func TestEtMerc(t *testing.T) {
 	l, p := output2.Lam, output2.Phi
 	l = support.RToDD(l)
 	p = support.RToDD(p)
-	assert.InDelta(2.0, l, 1e-6)
-	assert.InDelta(1.0, p, 1e-6)
+	assert.InDelta(2.0, l, 1e-8)
+	assert.InDelta(1.0, p, 1e-8)
+}
+
+func Test3395(t *testing.T) {
+
+	assert := assert.New(t)
+
+	ps, err := support.NewProjString("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+	assert.NoError(err)
+
+	t.Skip()
+
+	sys, opx, err := core.NewSystem(ps)
+	assert.NoError(err)
+	assert.NotNil(sys)
+	assert.NotNil(opx)
+	assert.EqualValues(sys, opx.GetSystem())
 }
