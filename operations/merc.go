@@ -156,6 +156,7 @@ func (merc *Merc) mercSetup(sys *core.System) error {
 	isPhits := ps.ContainsKey("lat_ts")
 	if isPhits {
 		phits, _ = ps.GetAsFloat("lat_ts")
+		phits = support.DDToR(phits)
 		phits = math.Abs(phits)
 		if phits >= support.PiOverTwo {
 			return merror.New(merror.ErrLatTSLargerThan90)

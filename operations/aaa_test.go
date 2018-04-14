@@ -48,9 +48,9 @@ func TestConvertLPToXY(t *testing.T) {
 		output, err := op.Forward(input)
 		assert.NoError(err)
 
-		_, _ = output.X, output.Y
-		//assert.InDelta(d.x, x, 1e-2, mssg)
-		//assert.InDelta(d.y, y, 1e-2, mssg)
+		x, y := output.X, output.Y
+		assert.InDelta(d.x, x, 1e-2, mssg)
+		assert.InDelta(d.y, y, 1e-2, mssg)
 
 		input2 := output
 		output2, err := op.Inverse(input2)

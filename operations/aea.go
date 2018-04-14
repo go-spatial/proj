@@ -295,8 +295,8 @@ func (aea *Aea) aeaSetup(sys *core.System) error {
 		lat2 = 0.0
 	}
 
-	aea.phi1 = lat1
-	aea.phi2 = lat2
+	aea.phi1 = support.DDToR(lat1)
+	aea.phi2 = support.DDToR(lat2)
 
 	return aea.localSetup(aea.System)
 }
@@ -308,13 +308,13 @@ func (aea *Aea) leacSetup(sys *core.System) error {
 		lat1 = 0.0
 	}
 
-	south := support.PiOverTwo
+	south := -support.PiOverTwo
 	_, ok = aea.System.ProjString.GetAsInt("south")
 	if !ok {
-		south = -support.PiOverTwo
+		south = support.PiOverTwo
 	}
 
-	aea.phi2 = lat1
+	aea.phi2 = support.DDToR(lat1)
 	aea.phi1 = south
 
 	return aea.localSetup(aea.System)
