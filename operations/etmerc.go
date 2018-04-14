@@ -9,23 +9,21 @@ import (
 )
 
 func init() {
-	core.RegisterOperation("utm",
+	core.RegisterConvertLPToXY("utm",
 		"Universal Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tzone= south",
-		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewUtm,
 	)
-	core.RegisterOperation("etmerc",
+	core.RegisterConvertLPToXY("etmerc",
 		"Extended Transverse Mercator (UTM)",
 		"\n\tCyl, Sph\n\tlat_ts=(0)\nlat_0=(0)",
-		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewEtMerc,
 	)
 }
 
 // EtMerc implements core.IOperation and core.ConvertLPToXY
 type EtMerc struct {
-	core.OperationCommon
+	core.Operation
 	isUtm bool
 
 	// the "opaque" parts
@@ -38,7 +36,7 @@ type EtMerc struct {
 }
 
 // NewEtMerc returns a new EtMerc
-func NewEtMerc(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+func NewEtMerc(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
 	xxx := &EtMerc{
 		isUtm: false,
 	}
@@ -52,7 +50,7 @@ func NewEtMerc(system *core.System, desc *core.OperationDescription) (core.IOper
 }
 
 // NewUtm returns a new EtMerc
-func NewUtm(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+func NewUtm(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
 	xxx := &EtMerc{
 		isUtm: true,
 	}
@@ -66,48 +64,6 @@ func NewUtm(system *core.System, desc *core.OperationDescription) (core.IOperati
 }
 
 //---------------------------------------------------------------------
-
-// Forward goes forewards
-func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
-
-	lp, err := xxx.ForwardPrepare(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	xy, err := xxx.etmercForward(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	xy, err = xxx.ForwardFinalize(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	return xy, nil
-}
-
-// Inverse goes backwards
-func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
-
-	xy, err := xxx.InversePrepare(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	lp, err := xxx.etmercInverse(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	lp, err = xxx.InverseFinalize(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	return lp, nil
-}
 
 const etmercOrder = 6
 
@@ -217,8 +173,8 @@ func clens(a []float64, lenA int, argR float64) float64 {
 	return math.Sin(argR) * hr
 }
 
-// ETMercForward operation -- Ellipsoidal, forward
-func (xxx *EtMerc) etmercForward(lp *core.CoordLP) (*core.CoordXY, error) {
+// Forward operation -- Ellipsoidal, forward
+func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
@@ -250,8 +206,8 @@ func (xxx *EtMerc) etmercForward(lp *core.CoordLP) (*core.CoordXY, error) {
 	return xy, nil
 }
 
-// ETMercInverse operation (Ellipsoidal, inverse)
-func (xxx *EtMerc) etmercInverse(xy *core.CoordXY) (*core.CoordLP, error) {
+// Inverse operation (Ellipsoidal, inverse)
+func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 

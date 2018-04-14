@@ -1,10 +1,14 @@
 package core
 
-// CreatorFuncType is the type of the function which creates an operation-specific object
+import (
+	"github.com/go-spatial/proj4go/merror"
+)
+
+// ConvertLPToXYCreatorFuncType is the type of the function which creates an operation-specific object
 //
-// This returns an IOperation interface, which can be downcasted to something that implements
-// the operation's specific signature, such as an IConvertLPToXY.
-type CreatorFuncType func(*System, *OperationDescription) (IOperation, error)
+// This kind of function, when executed, creates an operation-specific type
+// which implements IConvertLPToXY.
+type ConvertLPToXYCreatorFuncType func(*System, *OperationDescription) (IConvertLPToXY, error)
 
 // OperationDescription stores the information about a particular kind of
 // operation. It is populated from each op in the "operations" package
@@ -16,26 +20,23 @@ type OperationDescription struct {
 	OperationType OperationType
 	InputType     CoordType
 	OutputType    CoordType
-	creatorFunc   CreatorFuncType
+	creatorFunc   interface{} // for now, this will always be a ConvertLPToXYCreatorFuncType
 }
 
-// RegisterOperation adds an OperationDescription entry to the OperationDescriptionTable
-func RegisterOperation(
+// RegisterConvertLPToXY adds an OperationDescription entry to the OperationDescriptionTable
+func RegisterConvertLPToXY(
 	id string,
 	description string,
 	description2 string,
-	operationType OperationType,
-	inputType CoordType,
-	outputType CoordType,
-	creatorFunc CreatorFuncType,
+	creatorFunc ConvertLPToXYCreatorFuncType,
 ) {
 	pi := &OperationDescription{
 		ID:            id,
 		Description:   description,
 		Description2:  description2,
-		OperationType: operationType,
-		InputType:     inputType,
-		OutputType:    outputType,
+		OperationType: OperationTypeConversion,
+		InputType:     CoordTypeLP,
+		OutputType:    CoordTypeXY,
 		creatorFunc:   creatorFunc,
 	}
 
@@ -46,14 +47,19 @@ func RegisterOperation(
 	OperationDescriptionTable[id] = pi
 }
 
-// Create returns a new object of the specific operation type, e.g. an operations.EtMerc
-func (desc *OperationDescription) Create(sys *System) (IOperation, error) {
-	f := desc.creatorFunc
+// CreateOperation returns a new object of the specific operation type, e.g. an operations.EtMerc
+func (desc *OperationDescription) CreateOperation(sys *System) (IOperation, error) {
 
-	specificOperation, err := f(sys, desc)
-	if err != nil {
-		return nil, err
+	if desc.IsConvertLPToXY() {
+		return NewConvertLPToXY(sys, desc)
 	}
 
-	return specificOperation, nil
+	return nil, merror.New(merror.NotYetSupported)
+}
+
+// IsConvertLPToXY returns true iff the operation can be casted to an IConvertLPToXY
+func (desc *OperationDescription) IsConvertLPToXY() bool {
+	return desc.OperationType == OperationTypeConversion &&
+		desc.InputType == CoordTypeLP &&
+		desc.OutputType == CoordTypeXY
 }

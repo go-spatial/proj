@@ -9,22 +9,20 @@ import (
 )
 
 func init() {
-	core.RegisterOperation("aea",
+	core.RegisterConvertLPToXY("aea",
 		"Albers Equal Area",
 		"\n\tConic Sph&Ell\n\tlat_1= lat_2=",
-		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewAea,
 	)
-	core.RegisterOperation("leac",
+	core.RegisterConvertLPToXY("leac",
 		"Lambert Equal Area Conic",
 		"\n\tConic, Sph&Ell\n\tlat_1= south",
-		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewLeac)
 }
 
 // Aea implements core.IOperation and core.ConvertLPToXY
 type Aea struct {
-	core.OperationCommon
+	core.Operation
 	isLambert bool
 
 	// the "opaque" parts
@@ -43,7 +41,7 @@ type Aea struct {
 }
 
 // NewAea is
-func NewAea(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+func NewAea(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
 	xxx := &Aea{
 		isLambert: false,
 	}
@@ -57,7 +55,7 @@ func NewAea(system *core.System, desc *core.OperationDescription) (core.IOperati
 }
 
 // NewLeac is too
-func NewLeac(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+func NewLeac(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
 	xxx := &Aea{
 		isLambert: true,
 	}
@@ -68,50 +66,6 @@ func NewLeac(system *core.System, desc *core.OperationDescription) (core.IOperat
 		return nil, err
 	}
 	return xxx, nil
-}
-
-//---------------------------------------------------------------------
-
-// Forward goes forewards
-func (aea *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
-
-	lp, err := aea.ForwardPrepare(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	xy, err := aea.aeaForward(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	xy, err = aea.ForwardFinalize(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	return xy, nil
-}
-
-// Inverse goes backwards
-func (aea *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
-
-	xy, err := aea.InversePrepare(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	lp, err := aea.aeaInverse(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	lp, err = aea.InverseFinalize(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	return lp, nil
 }
 
 //---------------------------------------------------------------------
@@ -208,7 +162,7 @@ func (aea *Aea) localSetup(sys *core.System) error {
 }
 
 // Forward goes frontwords
-func (aea *Aea) aeaForward(lp *core.CoordLP) (*core.CoordXY, error) {
+func (aea *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 	Q := aea
 	PE := aea.System.Ellipsoid
@@ -231,7 +185,7 @@ func (aea *Aea) aeaForward(lp *core.CoordLP) (*core.CoordXY, error) {
 }
 
 // Inverse goes backwards
-func (aea *Aea) aeaInverse(xy *core.CoordXY) (*core.CoordLP, error) {
+func (aea *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 	Q := aea

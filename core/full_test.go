@@ -56,6 +56,7 @@ func TestEtMerc(t *testing.T) {
 	assert.NotNil(opx)
 	assert.EqualValues(sys, opx.GetSystem())
 
+	assert.True(opx.GetDescription().IsConvertLPToXY())
 	op := opx.(core.IConvertLPToXY)
 
 	input := &core.CoordLP{Lam: support.DDToR(2.0), Phi: support.DDToR(1.0)}

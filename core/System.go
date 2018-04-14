@@ -52,7 +52,7 @@ const epsLat = 1.0e-12
 // In PROJ.4, a "projection" is a conversion from "angular" input to "scaled linear" output.
 type System struct {
 	ProjString *support.ProjString
-	Info       *OperationDescription
+	OpDescr    *OperationDescription
 
 	//
 	// COORDINATE HANDLING
@@ -137,7 +137,7 @@ func NewSystem(ps *support.ProjString) (*System, IOperation, error) {
 		return nil, nil, err
 	}
 
-	op, err := sys.Info.Create(sys)
+	op, err := sys.OpDescr.CreateOperation(sys)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -182,12 +182,12 @@ func (op *System) String() string {
 func (op *System) initialize() error {
 
 	projName, _ := op.ProjString.GetAsString("proj")
-	opInfo, ok := OperationDescriptionTable[projName]
+	opDescr, ok := OperationDescriptionTable[projName]
 	if !ok {
 		return merror.New(merror.BadProjStringError)
 	}
 
-	op.Info = opInfo
+	op.OpDescr = opDescr
 
 	err := op.processDatum()
 	if err != nil {

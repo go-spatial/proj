@@ -9,10 +9,9 @@ import (
 )
 
 func init() {
-	core.RegisterOperation("merc",
+	core.RegisterConvertLPToXY("merc",
 		"Universal Transverse Mercator (UTM)",
 		"\n\tCyl, Sph&Ell\n\tlat_ts=",
-		core.OperationTypeConversion, core.CoordTypeLP, core.CoordTypeXY,
 		NewMerc,
 	)
 }
@@ -21,12 +20,12 @@ const xeps10 = 1.e-10
 
 // Merc implements core.IOperation and core.ConvertLPToXY
 type Merc struct {
-	core.OperationCommon
+	core.Operation
 	isSphere bool
 }
 
 // NewMerc returns a new Merc
-func NewMerc(system *core.System, desc *core.OperationDescription) (core.IOperation, error) {
+func NewMerc(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
 	xxx := &Merc{
 		isSphere: false,
 	}
@@ -42,58 +41,24 @@ func NewMerc(system *core.System, desc *core.OperationDescription) (core.IOperat
 // Forward goes forewards
 func (merc *Merc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 
-	lp, err := merc.ForwardPrepare(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	var xy *core.CoordXY
 	if merc.isSphere {
-		xy, err = merc.mercSphericalForward(lp)
-	} else {
-		xy, err = merc.mercEllipsoidalForward(lp)
+		return merc.sphericalForward(lp)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	xy, err = merc.ForwardFinalize(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	return xy, nil
+	return merc.ellipsoidalForward(lp)
 }
 
 // Inverse goes backwards
 func (merc *Merc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
-	xy, err := merc.InversePrepare(xy)
-	if err != nil {
-		return nil, err
-	}
-
-	var lp *core.CoordLP
 	if merc.isSphere {
-		lp, err = merc.mercSphericalInverse(xy)
-	} else {
-		lp, err = merc.mercEllipsoidalInverse(xy)
+		return merc.sphericalInverse(xy)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	lp, err = merc.InverseFinalize(lp)
-	if err != nil {
-		return nil, err
-	}
-
-	return lp, nil
+	return merc.ellipsoidalInverse(xy)
 }
 
 //---------------------------------------------------------------------
 
-func (merc *Merc) mercEllipsoidalForward(lp *core.CoordLP) (*core.CoordXY, error) { /* Ellipsoidal, forward */
+func (merc *Merc) ellipsoidalForward(lp *core.CoordLP) (*core.CoordXY, error) { /* Ellipsoidal, forward */
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
 	P := merc.System
@@ -107,7 +72,7 @@ func (merc *Merc) mercEllipsoidalForward(lp *core.CoordLP) (*core.CoordXY, error
 	return xy, nil
 }
 
-func (merc *Merc) mercSphericalForward(lp *core.CoordLP) (*core.CoordXY, error) { /* Spheroidal, forward */
+func (merc *Merc) sphericalForward(lp *core.CoordLP) (*core.CoordXY, error) { /* Spheroidal, forward */
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
 	P := merc.System
@@ -120,7 +85,7 @@ func (merc *Merc) mercSphericalForward(lp *core.CoordLP) (*core.CoordXY, error) 
 	return xy, nil
 }
 
-func (merc *Merc) mercEllipsoidalInverse(xy *core.CoordXY) (*core.CoordLP, error) { /* Ellipsoidal, inverse */
+func (merc *Merc) ellipsoidalInverse(xy *core.CoordXY) (*core.CoordLP, error) { /* Ellipsoidal, inverse */
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 
 	P := merc.System
@@ -138,7 +103,7 @@ func (merc *Merc) mercEllipsoidalInverse(xy *core.CoordXY) (*core.CoordLP, error
 	return lp, nil
 }
 
-func (merc *Merc) mercSphericalInverse(xy *core.CoordXY) (*core.CoordLP, error) { /* Spheroidal, inverse */
+func (merc *Merc) sphericalInverse(xy *core.CoordXY) (*core.CoordLP, error) { /* Spheroidal, inverse */
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 
 	P := merc.System
