@@ -1,0 +1,235 @@
+package gie
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/go-spatial/proj4go/mlog"
+)
+
+// Parser reads a .gie file and returns the commands
+type Parser struct {
+	lines []string
+	cmds  []*Command
+}
+
+// NewParser creates a Parser object and runs the parser
+func NewParser(fname string) (*Parser, error) {
+
+	lines, err := readLines(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &Parser{
+		lines: lines,
+		cmds:  []*Command{},
+	}
+
+	for len(p.lines) > 0 {
+		//mlog.Printf("%s: %s", fname, p.lines[0])
+
+		if p.removeBlank() {
+			continue
+		}
+		if p.removeGie() {
+			continue
+		}
+		if p.removeTitleBlock() {
+			continue
+		}
+		if p.removeSingleDashed() {
+			continue
+		}
+		if p.removeComment() {
+			continue
+		}
+		if p.doCommand() {
+			continue
+		}
+		fmt.Printf("JUNK: %s\n", p.lines[0])
+		p.pop()
+	}
+
+	//for _, c := range p.cmds {
+	//fmt.Printf("CMD %s\n", c.proj)
+	//}
+	return p, nil
+}
+
+func (p *Parser) doCommand() bool {
+	s := p.lines[0]
+	idx := strings.Index(s, "#")
+	if idx >= 0 {
+		s = s[:idx]
+	}
+
+	tokens := strings.Fields(s)
+	numTokens := len(tokens) - 1
+	cmd := (*Command)(nil)
+	if len(p.cmds) > 0 {
+		cmd = p.cmds[len(p.cmds)-1]
+	}
+
+	switch tokens[0] {
+	case "operation":
+		ss := strings.Join(tokens[1:], " ")
+		cmd = NewCommand(ss)
+		p.cmds = append(p.cmds, cmd)
+		p.pop()
+		return true
+	case "tolerance":
+		if numTokens == 2 {
+			cmd.setTolerance(tokens[1], tokens[2])
+			p.pop()
+			return true
+		} else if numTokens == 1 {
+			cmd.setTolerance(tokens[1], "*")
+			p.pop()
+			return true
+
+		}
+		mlog.Printv(s)
+		panic(55)
+	case "accept":
+		switch {
+		case numTokens == 2:
+			cmd.setAccept(tokens[1], tokens[2], "0.0", "0.0")
+			p.pop()
+			return true
+		case numTokens == 3:
+			cmd.setAccept(tokens[1], tokens[2], tokens[3], "0.0")
+			p.pop()
+			return true
+		case numTokens == 4:
+			cmd.setAccept(tokens[1], tokens[2], tokens[3], tokens[4])
+			p.pop()
+			return true
+		}
+		mlog.Printv(s)
+		panic(44)
+
+	case "expect":
+		switch {
+		case tokens[1] == "failure":
+			cmd.setExpectFailure()
+			p.pop()
+			return true
+		case numTokens == 2:
+			cmd.setExpect(tokens[1], tokens[2], "0.0", "0.0")
+			p.pop()
+			return true
+		case numTokens == 3:
+			cmd.setExpect(tokens[1], tokens[2], tokens[3], "0.0")
+			p.pop()
+			return true
+		case numTokens == 4:
+			cmd.setExpect(tokens[1], tokens[2], tokens[3], tokens[4])
+			p.pop()
+			return true
+		}
+		mlog.Printv(s)
+		panic(33)
+	case "direction":
+		if numTokens != 1 {
+			panic(22)
+		}
+		cmd.setDirection(tokens[1])
+		p.pop()
+		return true
+	case "roundtrip":
+		mlog.Printf("roundtrip not supported")
+		//if numTokens != 1 {
+		//	panic(11)
+		//}
+		p.pop()
+		return true
+	}
+
+	return false
+}
+
+func (p *Parser) removeComment() bool {
+	s := strings.TrimSpace(p.lines[0])
+	if s[0:1] == "#" {
+		p.pop()
+		return true
+	}
+	return false
+}
+
+func (p *Parser) removeSingleDashed() bool {
+	if p.isDelimiter("-") {
+		p.pop()
+		return true
+	}
+	return false
+}
+
+func (p *Parser) removeGie() bool {
+	s := strings.TrimSpace(p.lines[0])
+	if s == "<gie>" || s == "</gie>" {
+		p.pop()
+		return true
+	}
+	return false
+}
+
+func (p *Parser) removeTitleBlock() bool {
+	if !p.isDelimiter("=") {
+		return false
+	}
+
+	p.pop()
+	for !p.isDelimiter("=") {
+		p.pop()
+	}
+	p.pop()
+	return true
+}
+
+func (p *Parser) removeBlank() bool {
+	s := strings.TrimSpace(p.lines[0])
+	if len(s) == 0 {
+		p.pop()
+		return true
+	}
+	return false
+}
+
+func (p *Parser) pop() {
+	p.lines = p.lines[1:]
+}
+
+func (p *Parser) isDelimiter(c string) bool {
+	s := strings.TrimSpace(p.lines[0])
+	s = strings.Replace(s, c, "", -1)
+	return len(s) == 0
+}
+
+func readLines(fname string) ([]string, error) {
+	file, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
+}
+
+func (p *Parser) executeAll() error {
+	for _, cmd := range p.cmds {
+		err := cmd.executeAll()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
