@@ -20,10 +20,10 @@ func DMSToDD(input string) (float64, error) {
 
 	mlog.Debugf("%s", input)
 
-	deg := `\s*(-|\+)?\s*(\d+)\s*([°Dd])` // t1, t2, t3
-	min := `\s*(\d+)\s*(['Mm])`           // t4, t5
-	sec := `\s*(\d+\.?\d*)\s*(["Ss])`     // t6, t7
-	news := `\s*([NnEeWwSs]?)`            // t8
+	deg := `\s*(-|\+)?\s*(\d+)\s*([°Dd]?)` // t1, t2, t3
+	min := `\s*(\d+)?\s*(['Mm]?)`          // t4, t5
+	sec := `\s*(\d+\.?\d*)?\s*(["Ss])?`    // t6, t7
+	news := `\s*([NnEeWwSs]?)`             // t8
 	expr := "^" + deg + min + sec + news + "$"
 	r := regexp.MustCompile(expr)
 
@@ -38,17 +38,24 @@ func DMSToDD(input string) (float64, error) {
 	s := tokens[6]
 	dir := tokens[8]
 
-	df, err := strconv.ParseFloat(d, 64)
+	var df, mf, sf float64
+	var err error
+
+	df, err = strconv.ParseFloat(d, 64)
 	if err != nil {
 		return 0.0, err
 	}
-	mf, err := strconv.ParseFloat(m, 64)
-	if err != nil {
-		return 0.0, err
+	if m != "" {
+		mf, err = strconv.ParseFloat(m, 64)
+		if err != nil {
+			return 0.0, err
+		}
 	}
-	sf, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return 0.0, err
+	if s != "" {
+		sf, err = strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0.0, err
+		}
 	}
 
 	dd := df + mf/60.0 + sf/3600.0

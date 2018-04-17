@@ -38,6 +38,8 @@ func NewProjString(source string) (*ProjString, error) {
 		Pairs: []Pair{},
 	}
 
+	source = collapse(source)
+
 	words := strings.Fields(source)
 	for _, w := range words {
 
@@ -50,7 +52,7 @@ func NewProjString(source string) (*ProjString, error) {
 		v := strings.Split(w, "=")
 
 		if v[0] == "" {
-			return nil, merror.New(merror.BadProjStringError)
+			return nil, merror.New(merror.InvalidProjectionSyntax, source)
 		}
 
 		switch len(v) {
@@ -67,14 +69,48 @@ func NewProjString(source string) (*ProjString, error) {
 
 		default:
 			// "proj=utm=bzzt"
-			return nil, merror.New(merror.BadProjStringError)
+			return nil, merror.New(merror.InvalidProjectionSyntax, v)
 		}
 
 		ret.Add(pair)
 	}
 
 	return ret, nil
+}
 
+// handle extra whitespace in lines like "  +proj = merc   x = 1.2  "
+//
+// repeat a bunch of simple replacements until nothing changes anymore
+// TODO: this is a bad hack
+func collapse(s string) string {
+
+	for {
+		t := strings.Replace(s, "\t", " ", -1)
+		t = strings.Replace(t, "  ", " ", -1)
+		t = strings.Replace(t, " =", "=", -1)
+		t = strings.Replace(t, "= ", "=", -1)
+
+		if s == t {
+			break
+		}
+		s = t
+	}
+	return s
+}
+
+// DeepCopy returns a detatched copy of the ProjString
+func (pl *ProjString) DeepCopy() *ProjString {
+
+	copy := &ProjString{
+		Pairs: []Pair{},
+	}
+
+	for _, pair := range pl.Pairs {
+		pair2 := pair
+		copy.Pairs = append(copy.Pairs, pair2)
+	}
+
+	return copy
 }
 
 func (pl *ProjString) String() string {
