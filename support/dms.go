@@ -20,10 +20,10 @@ func DMSToDD(input string) (float64, error) {
 
 	mlog.Debugf("%s", input)
 
-	deg := `\s*(-|\+)?\s*(\d+)\s*([°Dd])` // t1, t2, t3
-	min := `\s*(\d+)\s*(['Mm])`           // t4, t5
-	sec := `\s*(\d+\.?\d*)\s*(["Ss])`     // t6, t7
-	news := `\s*([NnEeWwSs]?)`            // t8
+	deg := `\s*(-|\+)?\s*(\d+)\s*([°Dd]?)` // t1, t2, t3
+	min := `\s*(\d+)?\s*(['Mm]?)`          // t4, t5
+	sec := `\s*(\d+\.?\d*)?\s*(["Ss])?`    // t6, t7
+	news := `\s*([NnEeWwSs]?)`             // t8
 	expr := "^" + deg + min + sec + news + "$"
 	r := regexp.MustCompile(expr)
 
