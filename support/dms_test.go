@@ -33,8 +33,8 @@ func TestDMSToDD(t *testing.T) {
 		{`.0d0m0s`, FAIL},
 		{`0d.0m0s`, FAIL},
 		{`0d0m.0s`, FAIL},
-		{`0d0m`, FAIL},
-		{`0d`, FAIL},
+		{`0d0m`, 0},
+		{`0d`, 0},
 		{`0d0m0sx`, FAIL},
 
 		{`12d34m56.78s`, ok},
@@ -67,7 +67,7 @@ func TestDMSToDD(t *testing.T) {
 	for _, d := range data {
 		actual, err := support.DMSToDD(d.input)
 		if d.expected == FAIL {
-			assert.Error(err)
+			assert.Error(err, "Test %s", d.input)
 		} else {
 			assert.NoError(err)
 			assert.InDelta(d.expected, actual, 1e-6, "Test %s", d.input)

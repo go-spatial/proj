@@ -103,15 +103,14 @@ func TestPairListParsing(t *testing.T) {
 
 	pl, err = support.NewProjString("  +proj=v1 +k2=v2 k3=v3 \t\t k4= k5")
 	assert.NoError(err)
-	assert.Equal(5, pl.Len())
+	assert.Equal(4, pl.Len())
 
 	assert.True(pl.ContainsKey("proj"))
 	assert.True(pl.ContainsKey("k2"))
 	assert.True(pl.ContainsKey("k3"))
 	assert.True(pl.ContainsKey("k4"))
-	assert.True(pl.ContainsKey("k5"))
+	assert.False(pl.ContainsKey("k5"))
 	assert.False(pl.ContainsKey("+k1"))
 
-	assert.Equal("", pl.Get(3).Value)
-	assert.Equal("", pl.Get(4).Value)
+	assert.Equal("k5", pl.Get(3).Value)
 }
