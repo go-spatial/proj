@@ -11,6 +11,7 @@ var supportedProjections = []string{
 	"aea", "leac",
 	"merc",
 	"airy",
+	"august",
 }
 
 var unsupportedKeys = []string{
