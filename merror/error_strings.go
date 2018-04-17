@@ -9,11 +9,11 @@ var (
 	ProjectionStringRequiresEllipse = "projection string requires ellipse"
 	MajorAxisNotGiven               = "major axis not given"
 	ReverseFlatteningIsZero         = "reverse flattening (rf) is zero"
+	EccentricityIsOne               = "eccentricity is one"
 
 	ProjValueMissing          = "proj value missing in string"
 	NoSuchDatum               = "no such datum"
 	NotYetSupported           = "not yet supported" // TODO
-	ErrEccentricityIsOne      = "ERR_ECCENTRICITY_IS_ONE"
 	ErrInvalidArg             = "ERR_INVALID_ARG"
 	ErrEsLessThanZero         = "ERR_ES_LESS_THAN_ZERO"
 	ErrToleranceCondition     = "ERR_TOLERANCE_CONDITION"
