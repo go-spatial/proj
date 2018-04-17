@@ -2,7 +2,7 @@
 
 set -e
 
-for i in api apps/proj core merror mlog operations support tables  # gie
+for i in api apps/proj core merror mlog operations support   # gie
 do
     pushd $i &> /dev/null
     go test -v -cover

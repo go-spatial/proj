@@ -245,7 +245,7 @@ func (op *System) processDatum() error {
 	datumName, ok := op.ProjString.GetAsString("datum")
 	if ok {
 
-		datum, ok := DatumTable[datumName]
+		datum, ok := support.DatumsTable[datumName]
 		if !ok {
 			return merror.New(merror.NoSuchDatum)
 		}
@@ -368,7 +368,7 @@ func (op *System) readUnits(vertical bool) (float64, float64, error) {
 	name, ok := op.ProjString.GetAsString(units)
 	var s string
 	if ok {
-		u, ok := UnitInfoTable[name]
+		u, ok := support.UnitsTable[name]
 		if !ok {
 			return 0.0, 0.0, merror.New(merror.ErrUnknownUnit)
 		}
@@ -514,7 +514,7 @@ func (op *System) processMisc() error {
 	name, ok := op.ProjString.GetAsString("pm")
 	if ok {
 		var value string
-		pm, ok := PrimeMeridianTable[name]
+		pm, ok := support.MeridiansTable[name]
 		if ok {
 			value = pm.Definition
 		} else {

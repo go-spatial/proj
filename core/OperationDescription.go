@@ -4,6 +4,9 @@ import (
 	"github.com/go-spatial/proj4go/merror"
 )
 
+// OperationDescriptionTable is the global list of all the known operations
+var OperationDescriptionTable = map[string]*OperationDescription{}
+
 // ConvertLPToXYCreatorFuncType is the type of the function which creates an operation-specific object
 //
 // This kind of function, when executed, creates an operation-specific type

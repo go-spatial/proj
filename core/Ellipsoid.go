@@ -218,7 +218,7 @@ func (e *Ellipsoid) doEllps(ps *support.ProjString) error {
 		return merror.New(merror.ErrInvalidArg)
 	}
 
-	ellps, ok := EllipsoidTable[name]
+	ellps, ok := support.EllipsoidsTable[name]
 	if !ok {
 		return merror.New(merror.UnknownEllipseParameter, name)
 	}
