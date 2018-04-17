@@ -167,6 +167,14 @@ func ValidateProjStringContents(pl *support.ProjString) error {
 		return merror.New(merror.InvalidProjectionSyntax, "proj=?")
 	}
 
+	// explicitly call out stuff we don't support yet
+	if pl.ContainsKey("axis") {
+		return merror.New(merror.UnsupportedProjectionString, "axis")
+	}
+	if pl.ContainsKey("geoidgrids") {
+		return merror.New(merror.UnsupportedProjectionString, "geoidgrids")
+	}
+
 	return nil
 }
 
