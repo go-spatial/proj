@@ -34,9 +34,9 @@ func TestGie(t *testing.T) {
 			assert.NoError(err, tag)
 
 			if err != nil {
-				passed++
-			} else {
 				failed++
+			} else {
+				passed++
 			}
 		}
 	}

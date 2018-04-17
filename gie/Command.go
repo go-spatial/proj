@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-spatial/proj4go/core"
+	"github.com/go-spatial/proj4go/mlog"
 	"github.com/go-spatial/proj4go/support"
 
 	// needed to pull in the projections
@@ -25,7 +26,7 @@ type testcase struct {
 
 // Command holds a set of tests as we build them up
 type Command struct {
-	proj            string
+	ProjString      string
 	delta           float64
 	testcases       []testcase
 	invFlag         bool
@@ -37,10 +38,10 @@ type Command struct {
 // NewCommand returns a command
 func NewCommand(file string, line int, ps string) *Command {
 	c := &Command{
-		proj:      ps,
-		testcases: []testcase{},
-		File:      file,
-		Line:      line,
+		ProjString: ps,
+		testcases:  []testcase{},
+		File:       file,
+		Line:       line,
 	}
 	//mlog.Printf("OPERATION: %s", ps)
 	return c
@@ -48,7 +49,7 @@ func NewCommand(file string, line int, ps string) *Command {
 
 // ProjectionName returns the name of the projection used in this test
 func (c *Command) ProjectionName() string {
-	s := c.proj
+	s := c.ProjString
 	for {
 		t := strings.Replace(s, "\t", " ", -1)
 		t = strings.Replace(t, "  ", " ", -1)
@@ -178,7 +179,7 @@ func (c *Command) setTolerance(s1, s2 string) {
 // Execute runs the tests
 func (c *Command) Execute() error {
 
-	ps, err := support.NewProjString(c.proj)
+	ps, err := support.NewProjString(c.ProjString)
 	if err != nil {
 		if c.completeFailure {
 			return nil
@@ -216,10 +217,22 @@ func (c *Command) Execute() error {
 	return nil
 }
 
-func check(expect, actual, delta float64) bool {
+func check(expect, actual, tolerance float64) bool {
+
 	diff := math.Abs(expect - actual)
-	if diff > delta {
-		//mlog.Printf("TEST FAILED")
+
+	if tolerance == 0.0 {
+		// they didn't specify a tolerance, so use 0.1%
+		perc := 100.0 * (tolerance / actual)
+		return perc <= 0.1
+	}
+
+	if diff > tolerance {
+		mlog.Printf("TEST FAILED")
+		mlog.Printf("expected:  %f", expect)
+		mlog.Printf("actual:    %f", actual)
+		mlog.Printf("tolerance: %f", tolerance)
+		mlog.Printf("diff:      %f", diff)
 		return false
 	}
 	return true
