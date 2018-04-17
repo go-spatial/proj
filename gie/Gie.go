@@ -14,6 +14,7 @@ var supportedProjections = []string{
 var unsupportedKeys = []string{
 	"axis",
 	"geoidgrids",
+	"to_meter",
 }
 
 // Gie manages the GIE reading and executing processes

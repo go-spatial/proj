@@ -174,6 +174,9 @@ func ValidateProjStringContents(pl *support.ProjString) error {
 	if pl.ContainsKey("geoidgrids") {
 		return merror.New(merror.UnsupportedProjectionString, "geoidgrids")
 	}
+	if pl.ContainsKey("to_meter") {
+		return merror.New(merror.UnsupportedProjectionString, "to_meter")
+	}
 
 	return nil
 }

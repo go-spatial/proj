@@ -22,17 +22,20 @@ type testcase struct {
 	inv    bool
 	accept coord
 	expect coord
+	trips  int
 }
 
 // Command holds a set of tests as we build them up
 type Command struct {
 	ProjString      string
-	delta           float64
+	tolerance       float64
 	testcases       []testcase
 	invFlag         bool
 	completeFailure bool
 	File            string
 	Line            int
+	roundtripCount  int
+	roundtripDelta  float64
 }
 
 // NewCommand returns a command
@@ -42,6 +45,7 @@ func NewCommand(file string, line int, ps string) *Command {
 		testcases:  []testcase{},
 		File:       file,
 		Line:       line,
+		tolerance:  0.5 * unitsValue("mm"),
 	}
 	//mlog.Printf("OPERATION: %s", ps)
 	return c
@@ -149,6 +153,21 @@ func (c *Command) setExpect(s1, s2, s3, s4 string) {
 	tc.expect = coord{v1, v2, v3, v4}
 }
 
+func (c *Command) setRoundtrip(s1, s2, s3 string) {
+	count, err := strconv.Atoi(s1)
+	if err != nil {
+		panic(err)
+	}
+	v, err := strconv.ParseFloat(s2, 64)
+	if err != nil {
+		panic(err)
+	}
+	delta := v / unitsValue(s3)
+
+	c.roundtripCount = count
+	c.roundtripDelta = delta
+}
+
 func (c *Command) setTolerance(s1, s2 string) {
 	//mlog.Printf("TOLERANCE: %s %s", s1, s2)
 	v, err := strconv.ParseFloat(s1, 64)
@@ -156,24 +175,25 @@ func (c *Command) setTolerance(s1, s2 string) {
 		panic(err)
 	}
 
-	c.delta = v
+	c.tolerance = v / unitsValue(s2)
+}
 
-	switch s2 {
+func unitsValue(s string) float64 {
+	switch s {
 	case "*":
-		c.delta /= 1.0
+		return 1.0
 	case "cm":
-		c.delta /= 100.0
+		return 100.0
 	case "nm":
-		c.delta /= 1.0e9
+		return 1.0e9
 	case "um":
-		c.delta /= 1.0e6
+		return 1.0e6
 	case "mm":
-		c.delta /= 1000.0
+		return 1000.0
 	case "m":
-		c.delta /= 1.0
-	default:
-		panic(s2)
+		return 1.0
 	}
+	panic(s)
 }
 
 // Execute runs the tests
@@ -198,20 +218,100 @@ func (c *Command) Execute() error {
 	op := opx.(core.IConvertLPToXY)
 
 	for _, tc := range c.testcases {
-		if !tc.inv {
-			input := &core.CoordLP{Lam: support.DDToR(tc.accept.a), Phi: support.DDToR(tc.accept.b)}
-			output, err := op.Forward(input)
-			if err != nil {
-				return err
-			}
 
-			x, y := output.X, output.Y
-			ok1 := check(tc.expect.a, x, c.delta)
-			ok2 := check(tc.expect.b, y, c.delta)
-			if !ok1 || !ok2 {
-				return fmt.Errorf("delta failed")
+		if !tc.inv {
+
+			if c.roundtripCount == 0 {
+				_, _, err = c.executeForwardOnce(
+					tc.accept.a, tc.accept.b,
+					tc.expect.a, tc.expect.b,
+					op, c.tolerance)
+			} else {
+				err = c.executeRoundtrip(
+					tc.accept.a, tc.accept.b,
+					tc.expect.a, tc.expect.b,
+					op, c.roundtripDelta, c.roundtripCount)
+			}
+		} else {
+			if c.roundtripCount == 0 {
+				_, _, err = c.executeInverseOnce(
+					tc.accept.a, tc.accept.b,
+					tc.expect.a, tc.expect.b,
+					op, c.roundtripDelta)
+			} else {
+				// roundtrips are always done from the Forward funcs
+				panic(9)
 			}
 		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Command) executeForwardOnce(
+	in1, in2, out1, out2 float64,
+	op core.IConvertLPToXY,
+	tolerance float64) (float64, float64, error) {
+
+	input := &core.CoordLP{Lam: support.DDToR(in1), Phi: support.DDToR(in2)}
+	output, err := op.Forward(input)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	x, y := output.X, output.Y
+	ok1 := check(out1, x, c.tolerance)
+	ok2 := check(out2, y, c.tolerance)
+	if !ok1 || !ok2 {
+		return 0, 0, fmt.Errorf("delta failed")
+	}
+
+	return x, y, nil
+}
+
+func (c *Command) executeInverseOnce(
+	in1, in2, out1, out2 float64,
+	op core.IConvertLPToXY,
+	tolerance float64) (float64, float64, error) {
+
+	input := &core.CoordXY{X: in1, Y: in2}
+	output, err := op.Inverse(input)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	lam, phi := support.RToDD(output.Lam), support.RToDD(output.Phi)
+	ok1 := check(out1, lam, c.tolerance)
+	ok2 := check(out2, phi, c.tolerance)
+	if !ok1 || !ok2 {
+		return 0, 0, fmt.Errorf("delta failed")
+	}
+
+	return lam, phi, nil
+}
+
+func (c *Command) executeRoundtrip(
+	in1, in2, out1, out2 float64,
+	op core.IConvertLPToXY,
+	tolerance float64,
+	count int) error {
+
+	for i := 0; i < count; i++ {
+
+		x, y, err := c.executeForwardOnce(in1, in2, out1, out2, op, tolerance)
+		if err != nil {
+			return err
+		}
+		lam, phi, err := c.executeInverseOnce(x, y, in1, in1, op, tolerance)
+		if err != nil {
+			return err
+		}
+
+		in1, in2 = lam, phi
 	}
 
 	return nil
@@ -220,12 +320,6 @@ func (c *Command) Execute() error {
 func check(expect, actual, tolerance float64) bool {
 
 	diff := math.Abs(expect - actual)
-
-	if tolerance == 0.0 {
-		// they didn't specify a tolerance, so use 0.1%
-		perc := 100.0 * (tolerance / actual)
-		return perc <= 0.1
-	}
 
 	if diff > tolerance {
 		mlog.Printf("TEST FAILED")

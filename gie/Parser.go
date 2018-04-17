@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"os"
 	"strings"
-
-	"github.com/go-spatial/proj4go/mlog"
 )
 
 // Parser reads a .gie file and returns the commands
@@ -192,15 +190,21 @@ func (p *Parser) doCommandDirection(tokens []string) bool {
 	return true
 }
 
-var warnedRoundtrip = false
-
 func (p *Parser) doCommandRoundtrip(tokens []string) bool {
-	if !warnedRoundtrip {
-		mlog.Printf("roundtrip not supported")
-		warnedRoundtrip = true
+	cmd := p.Commands[len(p.Commands)-1]
+	numTokens := len(tokens)
+
+	if numTokens == 1 {
+		cmd.setRoundtrip(tokens[0], "1.0", "*")
+		p.pop()
+		return true
 	}
-	p.pop()
-	return true
+	if numTokens == 3 {
+		cmd.setRoundtrip(tokens[0], tokens[1], tokens[2])
+		p.pop()
+		return true
+	}
+	panic(77)
 }
 
 func (p *Parser) doCommandBanner(tokens []string) bool {
