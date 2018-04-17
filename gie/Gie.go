@@ -10,6 +10,7 @@ var supportedProjections = []string{
 	"etmerc", "utm",
 	"aea", "leac",
 	"merc",
+	"airy",
 }
 
 var unsupportedKeys = []string{
