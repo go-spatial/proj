@@ -1,13 +1,16 @@
 package gie
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
 	"github.com/go-spatial/proj4go/core"
-	"github.com/go-spatial/proj4go/mlog"
 	"github.com/go-spatial/proj4go/support"
+
+	// needed to pull in the projections
+	_ "github.com/go-spatial/proj4go/operations"
 )
 
 type coord struct {
@@ -27,16 +30,46 @@ type Command struct {
 	testcases       []testcase
 	invFlag         bool
 	completeFailure bool
+	File            string
+	Line            int
 }
 
 // NewCommand returns a command
-func NewCommand(ps string) *Command {
+func NewCommand(file string, line int, ps string) *Command {
 	c := &Command{
 		proj:      ps,
 		testcases: []testcase{},
+		File:      file,
+		Line:      line,
 	}
 	//mlog.Printf("OPERATION: %s", ps)
 	return c
+}
+
+// ProjectionName returns the name of the projection used in this test
+func (c *Command) ProjectionName() string {
+	s := c.proj
+	for {
+		t := strings.Replace(s, "\t", " ", -1)
+		t = strings.Replace(t, "  ", " ", -1)
+		t = strings.Replace(t, " =", "=", -1)
+		t = strings.Replace(t, "= ", "=", -1)
+		if s == t {
+			break
+		}
+		s = t
+	}
+
+	toks := strings.Fields(s)
+	for _, tok := range toks {
+		if tok[0:1] == "+" {
+			tok = tok[1:]
+		}
+		if strings.HasPrefix(tok, "proj=") {
+			return tok[5:]
+		}
+	}
+	return "UNKNOWN"
 }
 
 func (c *Command) setDirection(s1 string) {
@@ -142,15 +175,22 @@ func (c *Command) setTolerance(s1, s2 string) {
 	}
 }
 
-func (c *Command) executeAll() error {
+// Execute runs the tests
+func (c *Command) Execute() error {
 
 	ps, err := support.NewProjString(c.proj)
 	if err != nil {
+		if c.completeFailure {
+			return nil
+		}
 		return err
 	}
 
 	_, opx, err := core.NewSystem(ps)
 	if err != nil {
+		if c.completeFailure {
+			return nil
+		}
 		return err
 	}
 
@@ -165,17 +205,22 @@ func (c *Command) executeAll() error {
 			}
 
 			x, y := output.X, output.Y
-			check(tc.expect.a, x, c.delta)
-			check(tc.expect.b, y, c.delta)
+			ok1 := check(tc.expect.a, x, c.delta)
+			ok2 := check(tc.expect.b, y, c.delta)
+			if !ok1 || !ok2 {
+				return fmt.Errorf("delta failed")
+			}
 		}
 	}
 
 	return nil
 }
 
-func check(expect, actual, delta float64) {
+func check(expect, actual, delta float64) bool {
 	diff := math.Abs(expect - actual)
 	if diff > delta {
-		mlog.Printf("FAIL")
+		//mlog.Printf("TEST FAILED")
+		return false
 	}
+	return true
 }

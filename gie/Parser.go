@@ -2,7 +2,6 @@ package gie
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 
@@ -11,8 +10,10 @@ import (
 
 // Parser reads a .gie file and returns the commands
 type Parser struct {
-	lines []string
-	cmds  []*Command
+	lines    []string
+	Commands []*Command
+	fname    string
+	lineNum  int
 }
 
 // NewParser creates a Parser object and runs the parser
@@ -24,8 +25,10 @@ func NewParser(fname string) (*Parser, error) {
 	}
 
 	p := &Parser{
-		lines: lines,
-		cmds:  []*Command{},
+		lines:    lines,
+		Commands: []*Command{},
+		fname:    fname,
+		lineNum:  0,
 	}
 
 	for len(p.lines) > 0 {
@@ -49,7 +52,10 @@ func NewParser(fname string) (*Parser, error) {
 		if p.doCommand() {
 			continue
 		}
-		fmt.Printf("JUNK: %s\n", p.lines[0])
+
+		if p.lines[0] != "" && (p.lines[0][0:1] >= "A" && p.lines[0][0:1] >= "Z") {
+			//fmt.Printf("[%s:%d] JUNK: %s\n", p.fname, p.lineNum, p.lines[0])
+		}
 		p.pop()
 	}
 
@@ -67,88 +73,160 @@ func (p *Parser) doCommand() bool {
 	}
 
 	tokens := strings.Fields(s)
-	numTokens := len(tokens) - 1
-	cmd := (*Command)(nil)
-	if len(p.cmds) > 0 {
-		cmd = p.cmds[len(p.cmds)-1]
-	}
 
 	switch tokens[0] {
 	case "operation":
-		ss := strings.Join(tokens[1:], " ")
-		cmd = NewCommand(ss)
-		p.cmds = append(p.cmds, cmd)
-		p.pop()
-		return true
-	case "tolerance":
-		if numTokens == 2 {
-			cmd.setTolerance(tokens[1], tokens[2])
-			p.pop()
-			return true
-		} else if numTokens == 1 {
-			cmd.setTolerance(tokens[1], "*")
-			p.pop()
-			return true
-
-		}
-		mlog.Printv(s)
-		panic(55)
+		return p.doCommandOperation(tokens[1:])
 	case "accept":
-		switch {
-		case numTokens == 2:
-			cmd.setAccept(tokens[1], tokens[2], "0.0", "0.0")
-			p.pop()
-			return true
-		case numTokens == 3:
-			cmd.setAccept(tokens[1], tokens[2], tokens[3], "0.0")
-			p.pop()
-			return true
-		case numTokens == 4:
-			cmd.setAccept(tokens[1], tokens[2], tokens[3], tokens[4])
-			p.pop()
-			return true
-		}
-		mlog.Printv(s)
-		panic(44)
-
+		return p.doCommandAccept(tokens[1:])
 	case "expect":
-		switch {
-		case tokens[1] == "failure":
-			cmd.setExpectFailure()
-			p.pop()
-			return true
-		case numTokens == 2:
-			cmd.setExpect(tokens[1], tokens[2], "0.0", "0.0")
-			p.pop()
-			return true
-		case numTokens == 3:
-			cmd.setExpect(tokens[1], tokens[2], tokens[3], "0.0")
-			p.pop()
-			return true
-		case numTokens == 4:
-			cmd.setExpect(tokens[1], tokens[2], tokens[3], tokens[4])
-			p.pop()
-			return true
-		}
-		mlog.Printv(s)
-		panic(33)
-	case "direction":
-		if numTokens != 1 {
-			panic(22)
-		}
-		cmd.setDirection(tokens[1])
-		p.pop()
-		return true
+		return p.doCommandExpect(tokens[1:])
 	case "roundtrip":
-		mlog.Printf("roundtrip not supported")
-		//if numTokens != 1 {
-		//	panic(11)
-		//}
-		p.pop()
-		return true
+		return p.doCommandRoundtrip(tokens[1:])
+	case "banner":
+		return p.doCommandBanner(tokens[1:])
+	case "verbose":
+		return p.doCommandVerbose(tokens[1:])
+	case "direction":
+		return p.doCommandDirection(tokens[1:])
+	case "tolerance":
+		return p.doCommandTolerance(tokens[1:])
+	case "ignore":
+		return p.doCommandIgnore(tokens[1:])
+	case "builtins":
+		return p.doCommandBuiltins(tokens[1:])
+	case "echo":
+		return p.doCommandEcho(tokens[1:])
+	case "skip":
+		return p.doCommandSkip(tokens[1:])
 	}
 
 	return false
+}
+
+func (p *Parser) doCommandOperation(tokens []string) bool {
+	ss := strings.Join(tokens, " ")
+	p.pop()
+	// naive assumption: if the next line starts with whitespace, it's a
+	// continuation of the command
+	for len(p.lines) > 0 && (p.lines[0] == "" || p.lines[0][0:1] == " " || p.lines[0][0:1] == "\t") {
+		ss += p.lines[0]
+		p.pop()
+	}
+	cmd := NewCommand(p.fname, p.lineNum, ss)
+	p.Commands = append(p.Commands, cmd)
+	return true
+}
+
+func (p *Parser) doCommandTolerance(tokens []string) bool {
+	cmd := p.Commands[len(p.Commands)-1]
+	numTokens := len(tokens)
+
+	if numTokens == 2 {
+		cmd.setTolerance(tokens[0], tokens[1])
+		p.pop()
+		return true
+	} else if numTokens == 1 {
+		cmd.setTolerance(tokens[0], "*")
+		p.pop()
+		return true
+	}
+	panic(55)
+}
+
+func (p *Parser) doCommandAccept(tokens []string) bool {
+	cmd := p.Commands[len(p.Commands)-1]
+	numTokens := len(tokens)
+
+	switch {
+	case numTokens == 2:
+		cmd.setAccept(tokens[0], tokens[1], "0.0", "0.0")
+		p.pop()
+		return true
+	case numTokens == 3:
+		cmd.setAccept(tokens[0], tokens[1], tokens[2], "0.0")
+		p.pop()
+		return true
+	case numTokens == 4:
+		cmd.setAccept(tokens[0], tokens[1], tokens[2], tokens[3])
+		p.pop()
+		return true
+	}
+	panic(44)
+}
+
+func (p *Parser) doCommandExpect(tokens []string) bool {
+	cmd := p.Commands[len(p.Commands)-1]
+	numTokens := len(tokens)
+
+	switch {
+	case tokens[0] == "failure":
+		cmd.setExpectFailure()
+		p.pop()
+		return true
+	case numTokens == 2:
+		cmd.setExpect(tokens[0], tokens[1], "0.0", "0.0")
+		p.pop()
+		return true
+	case numTokens == 3:
+		cmd.setExpect(tokens[0], tokens[1], tokens[2], "0.0")
+		p.pop()
+		return true
+	case numTokens == 4:
+		cmd.setExpect(tokens[0], tokens[1], tokens[2], tokens[3])
+		p.pop()
+		return true
+	}
+	panic(33)
+}
+
+func (p *Parser) doCommandDirection(tokens []string) bool {
+	cmd := p.Commands[len(p.Commands)-1]
+	numTokens := len(tokens)
+
+	if numTokens != 1 {
+		panic(22)
+	}
+	cmd.setDirection(tokens[0])
+	p.pop()
+	return true
+}
+
+var warnedRoundtrip = false
+
+func (p *Parser) doCommandRoundtrip(tokens []string) bool {
+	if !warnedRoundtrip {
+		mlog.Printf("roundtrip not supported")
+		warnedRoundtrip = true
+	}
+	p.pop()
+	return true
+}
+
+func (p *Parser) doCommandBanner(tokens []string) bool {
+	panic("banner")
+}
+
+func (p *Parser) doCommandVerbose(tokens []string) bool {
+	panic("verbose")
+}
+
+func (p *Parser) doCommandIgnore(tokens []string) bool {
+	p.pop()
+	return true
+}
+
+func (p *Parser) doCommandBuiltins(tokens []string) bool {
+	p.pop()
+	return true
+}
+
+func (p *Parser) doCommandEcho(tokens []string) bool {
+	panic("echo")
+}
+
+func (p *Parser) doCommandSkip(tokens []string) bool {
+	panic("skip")
 }
 
 func (p *Parser) removeComment() bool {
@@ -201,6 +279,7 @@ func (p *Parser) removeBlank() bool {
 
 func (p *Parser) pop() {
 	p.lines = p.lines[1:]
+	p.lineNum++
 }
 
 func (p *Parser) isDelimiter(c string) bool {
@@ -222,14 +301,4 @@ func readLines(fname string) ([]string, error) {
 		lines = append(lines, scanner.Text())
 	}
 	return lines, scanner.Err()
-}
-
-func (p *Parser) executeAll() error {
-	for _, cmd := range p.cmds {
-		err := cmd.executeAll()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
