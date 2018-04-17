@@ -197,7 +197,7 @@ func (e *Ellipsoid) doCalcParams(a float64, es float64) error {
 
 	P.OneEs = 1. - P.Es
 	if P.OneEs == 0. {
-		return merror.New(merror.ErrEccentricityIsOne)
+		return merror.New(merror.EccentricityIsOne)
 	}
 
 	P.ROneEs = 1. / P.OneEs
@@ -228,18 +228,20 @@ func (e *Ellipsoid) doEllps(ps *support.ProjString) error {
 	e.Ell = ellps.Ell
 	e.Name = ellps.Name
 
+	newPS := ps.DeepCopy()
+
 	pl, err := support.NewProjString(ellps.Ell + " " + ellps.Major)
 	if err != nil {
 		panic(err)
 	}
-	ps.AddList(pl)
+	newPS.AddList(pl)
 
-	err = e.doSize(ps)
+	err = e.doSize(newPS)
 	if err != nil {
 		return err
 	}
 
-	err = e.doShape(ps)
+	err = e.doShape(newPS)
 	if err != nil {
 		return err
 	}
@@ -299,13 +301,14 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	keys := []string{"rf", "f", "es", "e", "b"}
 
 	/* Check which shape key is specified */
-	var key string
 	found := false
 	var foundValue float64
-	for _, key = range keys {
+	var foundKey string
+	for _, key := range keys {
 		value, ok := ps.GetAsFloat(key)
 		if ok {
 			found = true
+			foundKey = key
 			foundValue = value
 			break
 		}
@@ -329,7 +332,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	P.E = 0
 	P.Rf = 0
 
-	switch key {
+	switch foundKey {
 
 	/* reverse flattening, rf */
 	case "rf":
@@ -362,7 +365,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.Es == 1 {
-			return merror.New(merror.ErrEccentricityIsOne)
+			return merror.New(merror.EccentricityIsOne)
 		}
 
 	/* eccentricity, e */
@@ -375,7 +378,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.E == 1 {
-			return merror.New(merror.ErrEccentricityIsOne)
+			return merror.New(merror.EccentricityIsOne)
 		}
 		P.Es = P.E * P.E
 
@@ -386,7 +389,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.B == 0 {
-			return merror.New(merror.ErrEccentricityIsOne)
+			return merror.New(merror.EccentricityIsOne)
 		}
 		if P.B == P.A {
 			break

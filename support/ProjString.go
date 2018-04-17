@@ -76,7 +76,6 @@ func NewProjString(source string) (*ProjString, error) {
 	}
 
 	return ret, nil
-
 }
 
 // handle extra whitespace in lines like "  +proj = merc   x = 1.2  "
@@ -97,6 +96,21 @@ func collapse(s string) string {
 		s = t
 	}
 	return s
+}
+
+// DeepCopy returns a detatched copy of the ProjString
+func (pl *ProjString) DeepCopy() *ProjString {
+
+	copy := &ProjString{
+		Pairs: []Pair{},
+	}
+
+	for _, pair := range pl.Pairs {
+		pair2 := pair
+		copy.Pairs = append(copy.Pairs, pair2)
+	}
+
+	return copy
 }
 
 func (pl *ProjString) String() string {
