@@ -150,21 +150,21 @@ func ValidateProjStringContents(pl *support.ProjString) error {
 
 	// TODO: we don't support +init
 	if pl.CountKey("init") > 0 {
-		return merror.New(merror.BadProjStringError)
+		return merror.New(merror.UnsupportedProjectionString, "init")
 	}
 
 	// TODO: we don't support +pipeline
 	if pl.CountKey("pipeline") > 0 {
-		return merror.New(merror.BadProjStringError)
+		return merror.New(merror.UnsupportedProjectionString, "pipeline")
 	}
 
 	// you have to say +proj=...
 	if pl.CountKey("proj") != 1 {
-		return merror.New(merror.BadProjStringError)
+		return merror.New(merror.InvalidProjectionSyntax, "proj...proj")
 	}
 	projName, ok := pl.GetAsString("proj")
 	if !ok || projName == "" {
-		return merror.New(merror.ProjValueMissing)
+		return merror.New(merror.InvalidProjectionSyntax, "proj=?")
 	}
 
 	return nil
@@ -184,7 +184,7 @@ func (op *System) initialize() error {
 	projName, _ := op.ProjString.GetAsString("proj")
 	opDescr, ok := OperationDescriptionTable[projName]
 	if !ok {
-		return merror.New(merror.BadProjStringError)
+		return merror.New(merror.UnknownProjection, projName)
 	}
 
 	op.OpDescr = opDescr
@@ -257,7 +257,7 @@ func (op *System) processDatum() error {
 		op.DatumType = DatumTypeGridShift
 		catalogName, ok := op.ProjString.GetAsString("catalog")
 		if !ok {
-			return merror.New(merror.BadProjStringError)
+			return merror.New(merror.UnsupportedProjectionString, catalogName)
 		}
 		op.CatalogName = catalogName
 		datumDate, ok := op.ProjString.GetAsString("sdate")
@@ -269,7 +269,7 @@ func (op *System) processDatum() error {
 
 		values, ok := op.ProjString.GetAsFloats("towgs84")
 		if !ok {
-			return merror.New(merror.BadProjStringError)
+			return merror.New(merror.InvalidProjectionSyntax, "towgs84")
 		}
 
 		if len(values) == 3 {
@@ -301,7 +301,7 @@ func (op *System) processDatum() error {
 			/* Note that pj_init() will later switch datum_type to
 			   PJD_WGS84 if shifts are all zero, and ellipsoid is WGS84 or GRS80 */
 		} else {
-			return merror.New(merror.BadProjStringError)
+			return merror.New(merror.InvalidProjectionSyntax)
 		}
 	}
 
@@ -312,10 +312,13 @@ func (op *System) processEllipsoid() error {
 
 	ellipsoid, err := NewEllipsoid(op)
 	if err != nil {
+		return err
+	}
 
+	if ellipsoid == nil {
 		/* Didn't get an ellps, but doesn't need one: Get a free WGS84 */
 		if op.NeedEllps {
-			return merror.New(merror.BadProjStringError)
+			return merror.New(merror.ProjectionStringRequiresEllipse)
 		}
 
 		ellipsoid = &Ellipsoid{}
@@ -377,7 +380,7 @@ func (op *System) readUnits(vertical bool) (float64, float64, error) {
 
 		factor, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			return 0.0, 0.0, merror.New(merror.BadProjStringError)
+			return 0.0, 0.0, merror.New(merror.InvalidProjectionSyntax, s)
 		}
 		if (factor <= 0.0) || (1.0/factor == 0.0) {
 			return 0.0, 0.0, merror.New(merror.ErrUnitFactorLessThanZero)

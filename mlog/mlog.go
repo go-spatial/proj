@@ -57,6 +57,6 @@ func Printv(v interface{}) {
 func Error(err error) {
 	if ErrorEnabled {
 		s := err.Error()
-		errorLogger.Output(2, s)
+		infoLogger.Output(2, s)
 	}
 }

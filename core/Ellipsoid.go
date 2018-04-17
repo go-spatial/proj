@@ -220,7 +220,7 @@ func (e *Ellipsoid) doEllps(ps *support.ProjString) error {
 
 	ellps, ok := EllipsoidTable[name]
 	if !ok {
-		return merror.New(merror.ErrUnknownEllpParam)
+		return merror.New(merror.UnknownEllipseParameter, name)
 	}
 
 	e.ID = ellps.ID
@@ -269,16 +269,16 @@ func (e *Ellipsoid) doSize(ps *support.ProjString) error {
 		if aWasSet {
 			return nil
 		}
-		return merror.New(merror.ErrMajorAxisNotGiven)
+		return merror.New(merror.MajorAxisNotGiven)
 	}
 
 	P.DefSize = key
 	P.A = value
 	if P.A <= 0.0 {
-		return merror.New(merror.ErrMajorAxisNotGiven)
+		return merror.New(merror.MajorAxisNotGiven)
 	}
 	if P.A == math.MaxFloat64 {
-		return merror.New(merror.ErrMajorAxisNotGiven)
+		return merror.New(merror.MajorAxisNotGiven)
 	}
 
 	if key == "R" {
@@ -338,7 +338,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 			return merror.New(merror.ErrInvalidArg)
 		}
 		if P.Rf == 0 {
-			return merror.New(merror.ErrRevFlatteningIsZero)
+			return merror.New(merror.ReverseFlatteningIsZero)
 		}
 		P.F = 1 / P.Rf
 		P.Es = 2*P.F - P.F*P.F
