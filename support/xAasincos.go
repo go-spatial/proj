@@ -9,7 +9,7 @@ import (
 /* arc sin, cosine, tan2 and sqrt that will NOT fail */
 
 const oneTol = 1.00000000000001
-const aTol = 1e-50
+const tol50 = 1e-50
 
 // Aasin is asin w/ error catching
 func Aasin(v float64) float64 {
@@ -57,7 +57,7 @@ func Asqrt(v float64) float64 {
 
 // Aatan2 is atan2 w/ error catching
 func Aatan2(n, d float64) float64 {
-	if math.Abs(n) < aTol && math.Abs(d) < aTol {
+	if math.Abs(n) < tol50 && math.Abs(d) < tol50 {
 		return 0.0
 	}
 	return math.Atan2(n, d)

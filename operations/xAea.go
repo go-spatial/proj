@@ -70,20 +70,15 @@ func NewLeac(system *core.System, desc *core.OperationDescription) (core.IConver
 
 //---------------------------------------------------------------------
 
-const eps10 = 1.e-10
-const tol7 = 1.e-7
-
 /* determine latitude angle phi-1 */
 const nIter = 15
-const epsilon = 1.0e-7
-const tol = 1.0e-10
 
 func phi1(qs, Te, tOneEs float64) float64 {
 	var i int
 	var Phi, sinpi, cospi, con, com, dphi float64
 
 	Phi = math.Asin(.5 * qs)
-	if Te < epsilon {
+	if Te < eps7 {
 		return (Phi)
 	}
 	i = nIter
@@ -97,7 +92,7 @@ func phi1(qs, Te, tOneEs float64) float64 {
 			(1.+con)))
 		Phi += dphi
 		i--
-		if !(math.Abs(dphi) > tol && i != 0) {
+		if !(math.Abs(dphi) > tol10 && i != 0) {
 			break
 		}
 	}

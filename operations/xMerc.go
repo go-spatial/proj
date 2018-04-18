@@ -16,8 +16,6 @@ func init() {
 	)
 }
 
-const xeps10 = 1.e-10
-
 // Merc implements core.IOperation and core.ConvertLPToXY
 type Merc struct {
 	core.Operation
@@ -64,7 +62,7 @@ func (merc *Merc) ellipsoidalForward(lp *core.CoordLP) (*core.CoordXY, error) { 
 	P := merc.System
 	PE := merc.System.Ellipsoid
 
-	if math.Abs(math.Abs(lp.Phi)-support.PiOverTwo) <= xeps10 {
+	if math.Abs(math.Abs(lp.Phi)-support.PiOverTwo) <= eps10 {
 		return xy, merror.New(merror.ToleranceCondition)
 	}
 	xy.X = P.K0 * lp.Lam
@@ -77,7 +75,7 @@ func (merc *Merc) sphericalForward(lp *core.CoordLP) (*core.CoordXY, error) { /*
 
 	P := merc.System
 
-	if math.Abs(math.Abs(lp.Phi)-support.PiOverTwo) <= xeps10 {
+	if math.Abs(math.Abs(lp.Phi)-support.PiOverTwo) <= eps10 {
 		return xy, merror.New(merror.ToleranceCondition)
 	}
 	xy.X = P.K0 * lp.Lam
