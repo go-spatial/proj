@@ -87,8 +87,8 @@ func TestLogger(t *testing.T) {
 	assert.NoError(err)
 	buf = buf[0:n]
 
-	ex1 := "[DEBUG] mlog_test.go:65: debug 1"
-	ex2 := "[LOG] mlog_test.go:66: print 2"
+	ex1 := "[DEBUG] Log_test.go:65: debug 1"
+	ex2 := "[LOG] Log_test.go:66: print 2"
 	ex3 := "[ERROR] E"
 	expected := ex1 + "\n" + ex2 + "\n" + ex3 + "\n"
 	assert.Equal(expected, string(buf))
