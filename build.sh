@@ -2,7 +2,7 @@
 
 set -e
 
-for i in . apps/proj core merror mlog operations support   # gie
+for i in . cmd/proj core merror mlog operations support   # gie
 do
     echo "*** $i ***"
     pushd $i &> /dev/null
