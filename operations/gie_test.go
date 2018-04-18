@@ -1,17 +1,18 @@
-package tests
+package operations_test
 
 import (
 	"fmt"
 	"log"
 	"testing"
 
+	"github.com/go-spatial/proj/gie"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGie(t *testing.T) {
 	assert := assert.New(t)
 
-	g, err := NewGie("./data")
+	g, err := gie.NewGie("./gie_data")
 	assert.NoError(err)
 
 	err = g.Parse()
