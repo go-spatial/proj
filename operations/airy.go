@@ -17,15 +17,6 @@ func init() {
 	)
 }
 
-type mode int
-
-const (
-	modeNPole mode = 0
-	modeSPole      = 1
-	modeEquit      = 2
-	modeObliq      = 3
-)
-
 // Airy implements core.IOperation and core.ConvertLPToXY
 type Airy struct {
 	core.Operation
@@ -68,7 +59,7 @@ func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 			cosz = Q.sinph0*sinphi + Q.cosph0*cosz
 		}
 		if !Q.nocut && cosz < -eps10 {
-			return nil, merror.New(merror.ErrToleranceCondition)
+			return nil, merror.New(merror.ToleranceCondition)
 		}
 		s := 1. - cosz
 		if math.Abs(s) > eps10 {
@@ -87,7 +78,7 @@ func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	case modeSPole, modeNPole:
 		lp.Phi = math.Abs(Q.phalfpi - lp.Phi)
 		if !Q.nocut && (lp.Phi-eps10) > support.PiOverTwo {
-			return nil, merror.New(merror.ErrToleranceCondition)
+			return nil, merror.New(merror.ToleranceCondition)
 		}
 		lp.Phi *= 0.5
 		if lp.Phi > eps10 {

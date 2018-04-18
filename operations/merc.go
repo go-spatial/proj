@@ -65,7 +65,7 @@ func (merc *Merc) ellipsoidalForward(lp *core.CoordLP) (*core.CoordXY, error) { 
 	PE := merc.System.Ellipsoid
 
 	if math.Abs(math.Abs(lp.Phi)-support.PiOverTwo) <= xeps10 {
-		return xy, merror.New(merror.ErrToleranceCondition)
+		return xy, merror.New(merror.ToleranceCondition)
 	}
 	xy.X = P.K0 * lp.Lam
 	xy.Y = -P.K0 * math.Log(support.Tsfn(lp.Phi, math.Sin(lp.Phi), PE.E))
@@ -78,7 +78,7 @@ func (merc *Merc) sphericalForward(lp *core.CoordLP) (*core.CoordXY, error) { /*
 	P := merc.System
 
 	if math.Abs(math.Abs(lp.Phi)-support.PiOverTwo) <= xeps10 {
-		return xy, merror.New(merror.ErrToleranceCondition)
+		return xy, merror.New(merror.ToleranceCondition)
 	}
 	xy.X = P.K0 * lp.Lam
 	xy.Y = P.K0 * math.Log(math.Tan(support.PiOverFour+.5*lp.Phi))
@@ -97,7 +97,7 @@ func (merc *Merc) ellipsoidalInverse(xy *core.CoordXY) (*core.CoordLP, error) { 
 		return nil, err
 	}
 	if lp.Phi == math.MaxFloat64 {
-		return lp, merror.New(merror.ErrToleranceCondition)
+		return lp, merror.New(merror.ToleranceCondition)
 	}
 	lp.Lam = xy.X / P.K0
 	return lp, nil

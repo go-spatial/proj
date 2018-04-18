@@ -175,7 +175,7 @@ func (aea *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	}
 	Q.rho = Q.c - t
 	if Q.rho < 0. {
-		return xy, merror.New(merror.ErrToleranceCondition)
+		return xy, merror.New(merror.ToleranceCondition)
 	}
 	Q.rho = Q.dd * math.Sqrt(Q.rho)
 	lp.Lam *= Q.n
@@ -205,7 +205,7 @@ func (aea *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 			if math.Abs(Q.ec-math.Abs(lp.Phi)) > tol7 {
 				lp.Phi = phi1(lp.Phi, PE.E, PE.OneEs)
 				if lp.Phi == math.MaxFloat64 {
-					return lp, merror.New(merror.ErrToleranceCondition)
+					return lp, merror.New(merror.ToleranceCondition)
 				}
 			} else {
 				if lp.Phi < 0. {

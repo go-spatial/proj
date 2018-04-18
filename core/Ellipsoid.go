@@ -457,7 +457,7 @@ func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 	/* R_h - a sphere with R = the harmonic mean of the ellipsoid */
 	case "R_h":
 		if P.A+P.B == 0 {
-			return merror.New(merror.ErrToleranceCondition)
+			return merror.New(merror.ToleranceCondition)
 		}
 		P.A = (2 * P.A * P.B) / (P.A + P.B)
 

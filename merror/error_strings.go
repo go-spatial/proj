@@ -10,13 +10,13 @@ var (
 	MajorAxisNotGiven               = "major axis not given"
 	ReverseFlatteningIsZero         = "reverse flattening (rf) is zero"
 	EccentricityIsOne               = "eccentricity is one"
+	ToleranceCondition              = "tolerance condition error"
 
 	ProjValueMissing          = "proj value missing in string"
 	NoSuchDatum               = "no such datum"
 	NotYetSupported           = "not yet supported" // TODO
 	ErrInvalidArg             = "ERR_INVALID_ARG"
 	ErrEsLessThanZero         = "ERR_ES_LESS_THAN_ZERO"
-	ErrToleranceCondition     = "ERR_TOLERANCE_CONDITION"
 	ErrRefRadLargerThan90     = "ERR_REF_RAD_LARGER_THAN_90"
 	ErrInvalidDMS             = "ErrInvalidDMS"
 	ErrEllipsoidUseRequired   = "ERR_ELLIPSOID_USE_REQUIRED"
