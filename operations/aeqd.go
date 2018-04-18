@@ -7,10 +7,10 @@ package operations
 import (
 	"math"
 
-	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj/merror"
 
-	"github.com/go-spatial/proj4go/core"
-	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj/core"
+	"github.com/go-spatial/proj/support"
 )
 
 func init() {

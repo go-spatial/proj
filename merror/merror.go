@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/go-spatial/proj4go/mlog"
+	"github.com/go-spatial/proj/mlog"
 )
 
 // Error captures the type of error, where it occurred, inner errors, etc.

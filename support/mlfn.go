@@ -3,7 +3,7 @@ package support
 import (
 	"math"
 
-	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj/merror"
 )
 
 /* meridional distance for ellipsoid and inverse

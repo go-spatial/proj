@@ -2,8 +2,9 @@
 
 set -e
 
-for i in api apps/proj core merror mlog operations support   # gie
+for i in . apps/proj core merror mlog operations support   # gie
 do
+    echo "*** $i ***"
     pushd $i &> /dev/null
     go test -v -cover
     if [ "$?" -ne "0" ]

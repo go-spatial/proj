@@ -1,4 +1,4 @@
-package gie
+package tests
 
 import (
 	"fmt"
@@ -6,12 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-spatial/proj4go/core"
-	"github.com/go-spatial/proj4go/mlog"
-	"github.com/go-spatial/proj4go/support"
-
-	// needed to pull in the projections
-	_ "github.com/go-spatial/proj4go/operations"
+	"github.com/go-spatial/proj/core"
+	"github.com/go-spatial/proj/mlog"
+	"github.com/go-spatial/proj/support"
 )
 
 type coord struct {

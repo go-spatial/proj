@@ -1,12 +1,11 @@
-package operations_test
+package tests
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/go-spatial/proj4go/core"
-	_ "github.com/go-spatial/proj4go/operations"
-	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj/core"
+	"github.com/go-spatial/proj/support"
 	"github.com/stretchr/testify/assert"
 )
 

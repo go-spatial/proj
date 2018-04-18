@@ -1,9 +1,12 @@
-package gie
+package tests
 
 import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	// need to pull in the operations table entries
+	_ "github.com/go-spatial/proj/operations"
 )
 
 var supportedProjections = []string{

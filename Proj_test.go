@@ -1,9 +1,9 @@
-package api_test
+package proj_test
 
 import (
 	"testing"
 
-	proj4go "github.com/go-spatial/proj4go/api"
+	"github.com/go-spatial/proj"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,16 +21,16 @@ func Test3395(t *testing.T) {
 
 	// *** first way
 	{
-		output1A, err = proj4go.Project(source, dest, inputA)
+		output1A, err = proj.Project(source, dest, inputA)
 		assert.NoError(err)
 
-		output1B, err = proj4go.Project(source, dest, inputB)
+		output1B, err = proj.Project(source, dest, inputB)
 		assert.NoError(err)
 	}
 
 	// *** second way, which doesn't need to build the coordinate system object a second time
 	{
-		proj, err := proj4go.NewProjector(source, dest)
+		proj, err := proj.New(source, dest)
 		assert.NoError(err)
 
 		output2A, err = proj.Project(inputA)

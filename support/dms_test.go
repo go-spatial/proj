@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj/support"
 	"github.com/stretchr/testify/assert"
 )
 

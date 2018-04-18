@@ -3,11 +3,13 @@ package core_test
 import (
 	"testing"
 
-	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj/support"
 
-	"github.com/go-spatial/proj4go/core"
-	_ "github.com/go-spatial/proj4go/operations"
+	"github.com/go-spatial/proj/core"
 	"github.com/stretchr/testify/assert"
+
+	// need to pull in the operations table entries
+	_ "github.com/go-spatial/proj/operations"
 )
 
 func TestUtm(t *testing.T) {

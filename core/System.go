@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-spatial/proj4go/merror"
-	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj/merror"
+	"github.com/go-spatial/proj/support"
 )
 
 // DatumType is the enum for the types of datums we support

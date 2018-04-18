@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-spatial/proj4go/support"
+	"github.com/go-spatial/proj/support"
 )
 
 func main() {

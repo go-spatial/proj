@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj/merror"
 
-	"github.com/go-spatial/proj4go/mlog"
+	"github.com/go-spatial/proj/mlog"
 )
 
 // DMSToDD converts a degrees-minutes-seconds string to decimal-degrees

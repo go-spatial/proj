@@ -1,4 +1,4 @@
-package gie
+package tests
 
 import (
 	"bufio"

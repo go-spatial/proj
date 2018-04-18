@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj/merror"
 )
 
 // OperationDescriptionTable is the global list of all the known operations

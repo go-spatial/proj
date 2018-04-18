@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/go-spatial/proj4go/mlog"
+	"github.com/go-spatial/proj/mlog"
 	"github.com/stretchr/testify/assert"
 )
 

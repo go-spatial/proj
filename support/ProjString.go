@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-spatial/proj4go/merror"
+	"github.com/go-spatial/proj/merror"
 )
 
 // ProjString represents a "projection string", such as "+proj=utm +zone=11 +datum=WGS84"

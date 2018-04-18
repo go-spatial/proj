@@ -3,7 +3,7 @@ package support
 import (
 	"math"
 
-	"github.com/go-spatial/proj4go/mlog"
+	"github.com/go-spatial/proj/mlog"
 )
 
 /* arc sin, cosine, tan2 and sqrt that will NOT fail */
