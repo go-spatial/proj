@@ -1,6 +1,5 @@
 package core
 
-
 // OperationType is the enum for the different kinds of conversions and transforms
 type OperationType int
 
