@@ -55,7 +55,9 @@ coverprofile="$workdir/$coverprofilename.coverprofile"
 #            Sets -cover.
 mode=count
 
-
+function join { local IFS="$1"; shift; echo "$*"; }
+mypkgs=`go list ./...`
+mypkgs=`join , $mypkgs`
 
 # functions section
 generate_cover_data() {
@@ -64,7 +66,7 @@ generate_cover_data() {
 
     for pkg in "$@"; do
         f="$workdir/$(echo $pkg | tr / -).pkgcoverprofile"
-        go test -covermode="$mode" -coverprofile="$f" "$pkg"
+        go test -covermode="$mode" -coverprofile="$f" -coverpkg=$mypkgs "$pkg"
     done
 
     echo "mode: $mode" > "$coverprofile"
