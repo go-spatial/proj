@@ -51,9 +51,10 @@ func NewParser(fname string) (*Parser, error) {
 			continue
 		}
 
-		if p.lines[0] != "" && (p.lines[0][0:1] >= "A" && p.lines[0][0:1] >= "Z") {
-			//fmt.Printf("[%s:%d] JUNK: %s\n", p.fname, p.lineNum, p.lines[0])
-		}
+		//if p.lines[0] != "" && (p.lines[0][0:1] >= "A" && p.lines[0][0:1] >= "Z") {
+		//fmt.Printf("[%s:%d] JUNK: %s\n", p.fname, p.lineNum, p.lines[0])
+		//}
+
 		p.pop()
 	}
 
@@ -297,7 +298,7 @@ func readLines(fname string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var lines []string
 	scanner := bufio.NewScanner(file)

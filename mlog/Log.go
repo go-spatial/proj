@@ -28,7 +28,7 @@ func init() {
 func Debugf(format string, v ...interface{}) {
 	if DebugEnabled {
 		s := fmt.Sprintf(format, v...)
-		debugLogger.Output(2, s)
+		_ = debugLogger.Output(2, s)
 	}
 }
 
@@ -36,7 +36,7 @@ func Debugf(format string, v ...interface{}) {
 func Printf(format string, v ...interface{}) {
 	if InfoEnabled {
 		s := fmt.Sprintf(format, v...)
-		infoLogger.Output(2, s)
+		_ = infoLogger.Output(2, s)
 	}
 }
 
@@ -49,7 +49,7 @@ func Printv(v interface{}) {
 			panic(err)
 		}
 		s := string(b)
-		infoLogger.Output(2, s)
+		_ = infoLogger.Output(2, s)
 	}
 }
 
@@ -57,6 +57,6 @@ func Printv(v interface{}) {
 func Error(err error) {
 	if ErrorEnabled {
 		s := err.Error()
-		errorLogger.Output(2, s)
+		_ = errorLogger.Output(2, s)
 	}
 }

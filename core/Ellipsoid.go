@@ -87,11 +87,7 @@ func (e *Ellipsoid) initialize(op *System) error {
 		if err != nil {
 			return err
 		}
-		err = e.doCalcParams(e.A, 0)
-		if err != nil {
-			return err
-		}
-		return nil
+		return e.doCalcParams(e.A, 0)
 	}
 
 	/* If an ellps argument is specified, start by using that */
@@ -119,21 +115,7 @@ func (e *Ellipsoid) initialize(op *System) error {
 	}
 
 	/* And finally, we may turn it into a sphere */
-	err = e.doSpherification(op.ProjString)
-	if err != nil {
-		return err
-	}
-
-	//proj_log_debug (P, "pj_ellipsoid - final: a=%.3f f=1/%7.3f, errno=%d",
-	//                  P->a,  P->f!=0? 1/P->f: 0,  proj_errno (P));
-	//proj_log_debug (P, "pj_ellipsoid - final: %s %s %s %s",
-	//                  P->def_size?           P->def_size: empty,
-	//                P->def_shape?          P->def_shape: empty,
-	//              P->def_spherification? P->def_spherification: empty,
-	//            P->def_ellps?          P->def_ellps: empty            );
-
-	/* success */
-	return nil
+	return e.doSpherification(op.ProjString)
 }
 
 func (e *Ellipsoid) doCalcParams(a float64, es float64) error {
@@ -241,12 +223,7 @@ func (e *Ellipsoid) doEllps(ps *support.ProjString) error {
 		return err
 	}
 
-	err = e.doShape(newPS)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return e.doShape(newPS)
 }
 
 func (e *Ellipsoid) doSize(ps *support.ProjString) error {
@@ -500,10 +477,5 @@ func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 	P.Rf = math.MaxFloat64
 	P.B = P.A
 
-	err := e.doCalcParams(P.A, 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return e.doCalcParams(P.A, 0)
 }

@@ -65,10 +65,10 @@ func TestPairListGets(t *testing.T) {
 	pl.Add(p3)
 	pl.Add(p4)
 
-	vs, ok := pl.GetAsString("k99")
+	_, ok := pl.GetAsString("k99")
 	assert.False(ok)
 
-	vs, ok = pl.GetAsString("k2")
+	vs, ok := pl.GetAsString("k2")
 	assert.True(ok)
 	assert.Equal("2.2", vs)
 
@@ -95,13 +95,13 @@ func TestPairListGets(t *testing.T) {
 func TestPairListParsing(t *testing.T) {
 	assert := assert.New(t)
 
-	pl, err := support.NewProjString("")
+	_, err := support.NewProjString("")
 	assert.NoError(err)
 
 	_, err = support.NewProjString("k1=v1=v2")
 	assert.Error(err)
 
-	pl, err = support.NewProjString("  +proj=v1 +k2=v2 k3=v3 \t\t k4= k5")
+	pl, err := support.NewProjString("  +proj=v1 +k2=v2 k3=v3 \t\t k4= k5")
 	assert.NoError(err)
 	assert.Equal(4, pl.Len())
 

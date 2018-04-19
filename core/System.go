@@ -221,21 +221,7 @@ func (sys *System) initialize() error {
 		sys.DatumType = DatumTypeWGS84
 	}
 
-	err = sys.processMisc()
-	if err != nil {
-		return err
-	}
-
-	/*
-		// do setup work specific to this operation
-		// (locate_constructor)
-		err = op.Info.setup(op)
-		if err != nil {
-			return err
-		}
-	*/
-
-	return nil
+	return sys.processMisc()
 }
 
 func (sys *System) processDatum() error {
@@ -483,14 +469,7 @@ func (sys *System) processMisc() error {
 		return err
 	}
 
-	err = sys.processMeridian()
-	if err != nil {
-		return err
-	}
-
-	// TODO: geod_init(PIN->geod, PIN->a,  (1 - sqrt (1 - PIN->es)));
-
-	return nil
+	return sys.processMeridian()
 }
 
 func (sys *System) processScaling() error {

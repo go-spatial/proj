@@ -50,7 +50,9 @@ func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 
 	sinlam = math.Sin(lp.Lam)
 	coslam = math.Cos(lp.Lam)
+
 	switch Q.mode {
+
 	case modeEquit, modeObliq:
 		sinphi = math.Sin(lp.Phi)
 		cosphi = math.Cos(lp.Phi)
@@ -74,7 +76,7 @@ func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 		} else {
 			xy.Y = Krho * sinphi
 		}
-		break
+
 	case modeSPole, modeNPole:
 		lp.Phi = math.Abs(Q.phalfpi - lp.Phi)
 		if !Q.nocut && (lp.Phi-eps10) > support.PiOverTwo {
@@ -94,6 +96,7 @@ func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 			xy.Y = 0.
 		}
 	}
+
 	return xy, nil
 }
 

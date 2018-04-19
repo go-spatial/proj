@@ -19,7 +19,6 @@ type testcase struct {
 	inv    bool
 	accept coord
 	expect coord
-	trips  int
 }
 
 // Command holds a set of tests as we build them up

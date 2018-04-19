@@ -22,8 +22,8 @@ type Projector struct {
 
 // New creates a Projector object for the given soure and destination systems.
 func New(sourceEPSG, destEPSG int) (*Projector, error) {
-	pair := pair{sourceEPSG, destEPSG}
-	str, ok := knownProjections[pair]
+	codes := pair{sourceEPSG, destEPSG}
+	str, ok := knownProjections[codes]
 	if !ok {
 		return nil, fmt.Errorf("epsg code pair is not a supported projection")
 	}
@@ -43,7 +43,7 @@ func New(sourceEPSG, destEPSG int) (*Projector, error) {
 	}
 
 	proj := &Projector{
-		pair:       pair,
+		pair:       codes,
 		projString: ps,
 		system:     sys,
 		operation:  opx,

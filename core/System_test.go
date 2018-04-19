@@ -24,10 +24,10 @@ func TestSystem(t *testing.T) {
 func TestProjStringValidation(t *testing.T) {
 	assert := assert.New(t)
 
-	ps, err := support.NewProjString("")
+	_, err := support.NewProjString("")
 	assert.NoError(err)
 
-	ps, err = support.NewProjString("  +proj=P99 +k1=a   +k2=b    \t  ")
+	ps, err := support.NewProjString("  +proj=P99 +k1=a   +k2=b    \t  ")
 	assert.NoError(err)
 	assert.Equal(3, ps.Len())
 
