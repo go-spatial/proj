@@ -1,6 +1,6 @@
-# Proj4Go License
+# Proj License
 
-Proj4Go is a port of [PROJ.4](http://proj4.org) to the Go language (Golang).
+Proj is a port of [PROJ.4](http://proj4.org) to the Go language (Golang).
 The license terms for this port is same as the original PROJ.4 terms (included
 verbatim below), but the new work's default copyright line is:
 

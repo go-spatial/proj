@@ -1,4 +1,10 @@
-# "proj4go": PROJ4, for Go!
+[![Build Status](https://travis-ci.org/go-spatial/proj.svg?branch=master)](https://travis-ci.org/go-spatial/proj)
+[![Report Card](https://goreportcard.com/badge/github.com/go-spatial/proj)](https://goreportcard.com/report/github.com/go-spatial/proj)
+[![Coverage Status](https://coveralls.io/repos/github/go-spatial/proj/badge.svg?branch=master)](https://coveralls.io/github/go-spatial/proj?branch=master)
+[![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/go-spatial/proj)
+[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://github.com/go-spatial/proj/blob/master/LICENSE.md)
+
+# proj: PROJ4, for Go!
 
 This project is **UNDER ACTIVE DEVELOPMENT** and is, therefore, **NOT STABLE**, which subsequently means it **SHOULD NOT BE USED FOR PRODUCTION PURPOSES**.
 
