@@ -294,25 +294,27 @@ func (e *Ellipsoid) doSize(ps *support.ProjString) error {
 	return nil
 }
 
+func getShapeKey(ps *support.ProjString) (bool, string, float64) {
+
+	/* Check which shape key is specified */
+
+	keys := []string{"rf", "f", "es", "e", "b"}
+
+	for _, key := range keys {
+		value, ok := ps.GetAsFloat(key)
+		if ok {
+			return true, key, value
+		}
+	}
+
+	return false, "", 0.0
+}
+
 func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 
 	P := e
 
-	keys := []string{"rf", "f", "es", "e", "b"}
-
-	/* Check which shape key is specified */
-	found := false
-	var foundValue float64
-	var foundKey string
-	for _, key := range keys {
-		value, ok := ps.GetAsFloat(key)
-		if ok {
-			found = true
-			foundKey = key
-			foundValue = value
-			break
-		}
-	}
+	found, foundKey, foundValue := getShapeKey(ps)
 
 	/* Not giving a shape parameter means selecting a sphere, unless shape */
 	/* has been selected previously via ellps=xxx */
@@ -409,6 +411,18 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	return nil
 }
 
+func getSphereKey(ps *support.ProjString) string {
+	keys := []string{"R_A", "R_V", "R_a", "R_g", "R_h", "R_lat_a", "R_lat_g"}
+
+	for _, key := range keys {
+		if ps.ContainsKey(key) {
+			return key
+		}
+	}
+
+	return ""
+}
+
 func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 
 	P := e
@@ -420,19 +434,10 @@ func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 	const RV4 = 5 / 72.
 	const RV6 = 55 / 1296.
 
-	keys := []string{"R_A", "R_V", "R_a", "R_g", "R_h", "R_lat_a", "R_lat_g"}
-
-	var key string
-	found := false
-	for _, key = range keys {
-		if ps.ContainsKey(key) {
-			found = true
-			break
-		}
-	}
+	key := getSphereKey(ps)
 
 	/* No spherification specified? Then we're done */
-	if !found {
+	if key == "" {
 		return nil
 	}
 
