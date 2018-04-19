@@ -21,13 +21,11 @@ Everything we do is done through [issues](https://github.com/go-spatial/proj/iss
 
 Once you have filed an issue, we will discuss it in the issue. If we need more information or you have further questions about that issue, this is the place to ask. This is the place where we will discuss the design of the fix or feature. Any pull request that adds a feature or fixes an issue should reference the issue number.
 
-If you have changes to for the Tegola.io website — documentation on the website, tutorials, translation or anything else — the process is similar but on a different [repository](https://github.com/go-spatial/tegola-docs) (https://github.com/go-spatial/tegola-docs).
-
-Don’t be afraid to reach out if you have any questions.  You can reach us on the gophers Slack on the channel #tegola or #go-spatial. You can get an invite into the gophers Slack via (https://invite.slack.golangbridge.org/)
+Don’t be afraid to reach out if you have any questions.  You can reach us on the gophers Slack on the channel #proj or #go-spatial. You can get an invite into the gophers Slack via (https://invite.slack.golangbridge.org/)
 
 ## Making a Contribution to the code base.
 
-For the Tegola project our master branch is always the most recent stable version of the code base. The current release candidate will be in a branch name for the next version of the software. For example if the current release is v0.6.1 the next release will be v0.7.0, the release candidate branch will be called “v0.7.0”. Please, base all of your pull requests on the release candidate branch.
+For the Proj project our master branch is always the most recent stable version of the code base. The current release candidate will be in a branch name for the next version of the software. For example if the current release is v0.6.1 the next release will be v0.7.0, the release candidate branch will be called “v0.7.0”. Please, base all of your pull requests on the release candidate branch.
 
 ### Discuss your design
 
@@ -43,9 +41,7 @@ Want to contribute but not sure where? Not a problem, the best thing to do is lo
 
 ## How to build from source
 
-If you just need to play with the binary the easy way is to get the binary from our [releases page](https://github.com/go-spatial/tegola/releases), or if a binary for your OS is not there, use `go get -u github.com/go-spatial/tegola/cmd/tegola`.
-
-If however you want to build the latest release candidate you will have to build from source. The first thing to do is to clone the `go-spatial/tegola` repo to your `GOPATH`. The simplest way to do this is to use `go get -u github.com/go-spatial/tegola`, navigate to the repository root then: 
+Clone the `go-spatial/proj` repo to your `GOPATH`. The simplest way to do this is to use `go get -u github.com/go-spatial/proj`, navigate to the repository root then: 
 
 * Checkout the current release candidate branch, (i.e. v0.7.0)
 	
@@ -58,12 +54,6 @@ If however you want to build the latest release candidate you will have to build
 * Work on the fix, and run all the tests. We need to run tests with CGO enabled and disabled.
 	
 	(`go test ./…`)
- 	(`CGO_ENABLED=0 go test ./…`)
-
- * Make sure tegola can be built and run:
-
- 	(`cd cmd/tegola`)
- 	(`go build && ./tegola serve --config=path/to/config.toml`)
 	
 * Commit your changes (`git commit -am ‘Add some feature #XXX\n\nExtened description.'`)
 
@@ -90,13 +80,9 @@ For more information about this work flow, please refer to this [great explanati
 
 	- if you find that running `gofmt` produces changes across parts of the code base you're not working on, submit the formatting change in a separate Pull Request. This helps decouple engineering changes from formatting changes and focused the code review efforts. 
 	
-* When declaring errors variables they should take the form of:
+* When declaring errors variables, follow the style in the `error_strings.go` file in the `merror` package.
 	
-	(`var ErrErrorName  = errors.New("provider: canceled")`)
-	
-* The text should be all lowercase, and no punctuation at the end.
 
 ## Testing
 
-For tests we use go 1.7 sub tests. Please, look at the [cmp_test.go](https://github.com/go-spatial/tegola/blob/master/geom/cmp/cmp_test.go).
-
+We try to provide both unit and system tests, and we try to provide a high code coverage percentage.
