@@ -98,7 +98,7 @@ func collapse(s string) string {
 	return s
 }
 
-// DeepCopy returns a detatched copy of the ProjString
+// DeepCopy returns a detached copy of the ProjString
 func (pl *ProjString) DeepCopy() *ProjString {
 
 	copy := &ProjString{

@@ -13,5 +13,5 @@ const (
 	TwoPiHalfPi = 2.5 * Pi
 )
 
-// DegToRad is the mulitplication factor to convert degrees to radians
+// DegToRad is the multiplication factor to convert degrees to radians
 const DegToRad = 0.017453292519943296

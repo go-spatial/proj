@@ -271,7 +271,10 @@ func (op *System) processDatum() error {
 			return merror.New(merror.UnsupportedProjectionString, catalogName)
 		}
 		op.CatalogName = catalogName
-		datumDate, ok := op.ProjString.GetAsString("sdate")
+		datumDate, ok := op.ProjString.GetAsString("date")
+		if !ok {
+			return merror.New(merror.UnsupportedProjectionString, datumDate)
+		}
 		if datumDate != "" {
 			op.DatumDate = support.ParseDate(datumDate)
 		}
