@@ -73,3 +73,18 @@ func TestConvert(t *testing.T) {
 		}
 	}
 }
+
+func ExampleConvert() {
+
+	var dd = []float64{
+		-77.625583, 38.833846,
+	}
+
+	xy, err := proj.Convert(proj.EPSG3395, dd)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%.2f, %.2f\n", xy[0], xy[1])
+	// Output: -8641240.37, 4671101.60
+}
