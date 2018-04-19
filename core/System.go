@@ -473,16 +473,9 @@ func (sys *System) processMisc() error {
 		sys.T0 = f
 	}
 
-	/* General scaling factor */
-	if sys.ProjString.ContainsKey("k_0") {
-		sys.K0, _ = sys.ProjString.GetAsFloat("k_0")
-	} else if sys.ProjString.ContainsKey("k") {
-		sys.K0, _ = sys.ProjString.GetAsFloat("k")
-	} else {
-		sys.K0 = 1.0
-	}
-	if sys.K0 <= 0.0 {
-		return merror.New(merror.ErrKLessThanZero)
+	err = sys.processScaling()
+	if err != nil {
+		return err
 	}
 
 	err = sys.processUnits()
@@ -496,6 +489,23 @@ func (sys *System) processMisc() error {
 	}
 
 	// TODO: geod_init(PIN->geod, PIN->a,  (1 - sqrt (1 - PIN->es)));
+
+	return nil
+}
+
+func (sys *System) processScaling() error {
+
+	/* General scaling factor */
+	if sys.ProjString.ContainsKey("k_0") {
+		sys.K0, _ = sys.ProjString.GetAsFloat("k_0")
+	} else if sys.ProjString.ContainsKey("k") {
+		sys.K0, _ = sys.ProjString.GetAsFloat("k")
+	} else {
+		sys.K0 = 1.0
+	}
+	if sys.K0 <= 0.0 {
+		return merror.New(merror.ErrKLessThanZero)
+	}
 
 	return nil
 }

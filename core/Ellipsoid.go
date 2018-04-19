@@ -318,10 +318,10 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 
 	/* Not giving a shape parameter means selecting a sphere, unless shape */
 	/* has been selected previously via ellps=xxx */
-	if !found && P.Es != 0 {
-		return nil
-	}
-	if !found && P.Es == 0 {
+	if !found {
+		if P.Es != 0 {
+			return nil
+		}
 		P.Es = 0
 		P.F = 0
 		P.B = P.A
