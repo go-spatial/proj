@@ -249,7 +249,7 @@ func (xxx *EtMerc) localSetup(P *core.System) error {
 	PE := P.Ellipsoid
 
 	if PE.Es <= 0 {
-		return merror.New(merror.ErrEllipsoidUseRequired)
+		return merror.New(merror.EllipsoidUseRequired)
 	}
 
 	/* flattening */
@@ -341,10 +341,10 @@ func (xxx *EtMerc) etmercSetup(op *core.System) error {
 func (xxx *EtMerc) utmSetup(op *core.System) error {
 
 	if op.Ellipsoid.Es == 0.0 {
-		return merror.New(merror.ErrEllipsoidUseRequired)
+		return merror.New(merror.EllipsoidUseRequired)
 	}
 	if op.Lam0 < -1000.0 || op.Lam0 > 1000.0 {
-		return merror.New(merror.ErrInvalidUTMZone)
+		return merror.New(merror.InvalidUTMZone)
 	}
 
 	op.Y0 = 0.0
@@ -358,7 +358,7 @@ func (xxx *EtMerc) utmSetup(op *core.System) error {
 		if zone > 0 && zone <= 60 {
 			zone--
 		} else {
-			return merror.New(merror.ErrInvalidUTMZone)
+			return merror.New(merror.InvalidUTMZone)
 		}
 	} else { /* nearest central meridian input */
 		zone = (int)(math.Floor((support.Adjlon(op.Lam0) + support.Pi) * 30. / support.Pi))

@@ -359,7 +359,7 @@ func (sys *System) readUnits(vertical bool) (float64, float64, error) {
 	if ok {
 		u, ok := support.UnitsTable[name]
 		if !ok {
-			return 0.0, 0.0, merror.New(merror.ErrUnknownUnit)
+			return 0.0, 0.0, merror.New(merror.UnknownUnit)
 		}
 		s = u.ToMetersS
 	}
@@ -383,7 +383,7 @@ func (sys *System) readUnits(vertical bool) (float64, float64, error) {
 			return 0.0, 0.0, merror.New(merror.InvalidProjectionSyntax, s)
 		}
 		if (factor <= 0.0) || (1.0/factor == 0.0) {
-			return 0.0, 0.0, merror.New(merror.ErrUnitFactorLessThanZero)
+			return 0.0, 0.0, merror.New(merror.UnitFactorLessThanZero)
 		}
 
 		if ratio {
@@ -420,7 +420,7 @@ func (sys *System) processMisc() error {
 		/* when correcting longitudes around it */
 		/* The test is written this way to error on long_wrap_center "=" NaN */
 		if !(math.Abs(sys.LongWrapCenter) < 10.0*support.TwoPi) {
-			return merror.New(merror.ErrLatOrLonExceededLimit)
+			return merror.New(merror.LatOrLonExceededLimit)
 		}
 	}
 
@@ -483,7 +483,7 @@ func (sys *System) processScaling() error {
 		sys.K0 = 1.0
 	}
 	if sys.K0 <= 0.0 {
-		return merror.New(merror.ErrKLessThanZero)
+		return merror.New(merror.KLessThanZero)
 	}
 
 	return nil
@@ -537,13 +537,13 @@ func (sys *System) processAxis() error {
 		axisLegal := "ewnsud"
 		axisArg, _ := sys.ProjString.GetAsString("axis")
 		if len(axisArg) != 3 {
-			return merror.New(merror.ErrAxis)
+			return merror.New(merror.Axis)
 		}
 
 		if !strings.ContainsAny(axisArg[0:1], axisLegal) ||
 			!strings.ContainsAny(axisArg[1:2], axisLegal) ||
 			!strings.ContainsAny(axisArg[2:3], axisLegal) {
-			return merror.New(merror.ErrAxis)
+			return merror.New(merror.Axis)
 		}
 
 		/* TODO: it would be nice to validate we don't have on axis repeated */

@@ -122,7 +122,7 @@ func (merc *Merc) mercSetup(sys *core.System) error {
 		phits = support.DDToR(phits)
 		phits = math.Abs(phits)
 		if phits >= support.PiOverTwo {
-			return merror.New(merror.ErrLatTSLargerThan90)
+			return merror.New(merror.LatTSLargerThan90)
 		}
 	}
 

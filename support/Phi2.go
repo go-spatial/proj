@@ -29,7 +29,7 @@ func Phi2(ts, e float64) (float64, error) {
 		break
 	}
 	if i <= 0 {
-		return 0.0, merror.New(merror.ErrPhi2)
+		return 0.0, merror.New(merror.Phi2)
 	}
 	return Phi, nil
 }
