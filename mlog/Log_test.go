@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -66,6 +67,8 @@ func TestLogger(t *testing.T) {
 		mlog.Printf("print %s", "2")
 		e := fmt.Errorf("E")
 		mlog.Error(e)
+		x := "yow"
+		mlog.Printv(x)
 
 		mlog.DebugEnabled = false
 		mlog.InfoEnabled = false
@@ -87,9 +90,12 @@ func TestLogger(t *testing.T) {
 	assert.NoError(err)
 	buf = buf[0:n]
 
-	ex1 := "[DEBUG] Log_test.go:65: debug 1"
-	ex2 := "[LOG] Log_test.go:66: print 2"
-	ex3 := "[ERROR] E"
-	expected := ex1 + "\n" + ex2 + "\n" + ex3 + "\n"
+	ex := []string{
+		"[DEBUG] Log_test.go:66: debug 1",
+		"[LOG] Log_test.go:67: print 2",
+		"[ERROR] E",
+		"[LOG] Log_test.go:71: \"yow\"",
+	}
+	expected := strings.Join(ex, "\n") + "\n"
 	assert.Equal(expected, string(buf))
 }

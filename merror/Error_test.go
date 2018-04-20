@@ -30,4 +30,8 @@ func TestError(t *testing.T) {
 	exp3 := "wrapped error (from merror_test.TestError at Error_test.go:28)"
 	exp3 += " // Inner: " + exp2
 	assert.Equal(exp3, err3.Error())
+
+	err4 := merror.Pass(err2)
+	assert.Error(err4)
+	assert.Equal(exp2, err4.Error())
 }
