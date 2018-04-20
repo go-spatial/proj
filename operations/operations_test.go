@@ -137,3 +137,45 @@ func TestConvert(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkConvertEtMerc(b *testing.B) {
+
+	ps, _ := support.NewProjString("+proj=utm +zone=32 +ellps=GRS80")
+	_, opx, _ := core.NewSystem(ps)
+	op := opx.(core.IConvertLPToXY)
+	input := &core.CoordLP{Lam: support.DDToR(12.0), Phi: support.DDToR(55.0)}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = op.Forward(input)
+	}
+}
+
+func BenchmarkConvertAea(b *testing.B) {
+
+	ps, _ := support.NewProjString("+proj=aea   +ellps=GRS80  +lat_1=0 +lat_2=2")
+	_, opx, _ := core.NewSystem(ps)
+	op := opx.(core.IConvertLPToXY)
+	input := &core.CoordLP{Lam: support.DDToR(12.0), Phi: support.DDToR(55.0)}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = op.Forward(input)
+	}
+}
+
+func BenchmarkConvertAiry(b *testing.B) {
+
+	ps, _ := support.NewProjString("+proj=airy   +a=6400000    +lat_1=0 +lat_2=2")
+	_, opx, _ := core.NewSystem(ps)
+	op := opx.(core.IConvertLPToXY)
+	input := &core.CoordLP{Lam: support.DDToR(12.0), Phi: support.DDToR(55.0)}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = op.Forward(input)
+	}
+}
