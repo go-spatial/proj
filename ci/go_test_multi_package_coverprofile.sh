@@ -55,16 +55,23 @@ coverprofile="$workdir/$coverprofilename.coverprofile"
 #            Sets -cover.
 mode=count
 
-function join { local IFS="$1"; shift; echo "$*"; }
-mypkgs=`go list ./...`
-mypkgs=`join , $mypkgs`
-
 # functions section
 generate_cover_data() {
     rm -rf "$workdir"
     mkdir "$workdir"
 
     for pkg in "$@"; do
+
+        # Make a list of each proj-related package we depend on (plus ourself).
+        # We will collect coverage stats on all those packages, not just ourself,
+        # so that we can get coverage data across package boundaries.
+        mypkgs=$pkg
+        for i in `go list -f '{{.Deps}}' $pkg` ; do
+            if [[ "$i" = "github.com/go-spatial/proj"* ]]; then
+                mypkgs="$mypkgs,$i"
+            fi
+        done
+
         f="$workdir/$(echo $pkg | tr / -).pkgcoverprofile"
         go test -covermode="$mode" -coverprofile="$f" -coverpkg=$mypkgs "$pkg"
     done
