@@ -98,10 +98,10 @@ func TestLogger(t *testing.T) {
 	buf = buf[0:n]
 
 	ex := []string{
-		"[DEBUG] Log_test.go:66: debug 1",
-		"[LOG] Log_test.go:67: print 2",
+		"[DEBUG] Log_test.go:73: debug 1",
+		"[LOG] Log_test.go:74: print 2",
 		"[ERROR] E",
-		"[LOG] Log_test.go:71: \"yow\"",
+		"[LOG] Log_test.go:78: \"yow\"",
 	}
 	expected := strings.Join(ex, "\n") + "\n"
 	assert.Equal(expected, string(buf))
