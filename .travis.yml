@@ -14,7 +14,7 @@ matrix:
 #    - go: "1.8.x"
 #      env: CGO_ENABLED=0
     - go: "1.10.x"
-    - go: "1.9.x"
+#    - go: "1.9.x"
 #    - go: "1.8.x"
 
 script:
