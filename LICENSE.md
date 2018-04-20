@@ -4,6 +4,33 @@ Proj is a port of [PROJ.4](http://proj4.org) to the Go language (Golang).
 The license terms for this port is same as the original PROJ.4 terms (included
 verbatim below).
 
+See the `CONTRIBUTORS.md` file for a list of all Proj contributors.
+
+# Proj License
+
+Copyright (c) 2018, Michael P. Gerlek (Flaxen Consulting)
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+
+# Copyright Header
+
 The copyright header for this project's files is:
 
 ```
@@ -14,8 +41,6 @@ In keeping with the terms of the PROJ.4 project, this software
 is provided under the MIT-style license in `LICENSE.md` and
 may additionally be subject to the copyrights of the PROJ.4 authors.
 ```
-
-See the `CONTRIBUTORS.md` file for a list of all Proj contributors.
 
 
 # Original PROJ.4 License
