@@ -8,6 +8,10 @@ import (
 	"github.com/go-spatial/proj/mlog"
 )
 
+// ShowSource determines whther to include source file and line information in
+// the Error() string
+var ShowSource = false
+
 // Error captures the type of error, where it occurred, inner errors, etc.
 // Error implements the error interface
 type Error struct {
@@ -72,7 +76,10 @@ func Pass(err error) error {
 }
 
 func (e Error) Error() string {
-	s := fmt.Sprintf("%s (from %s at %s:%d)", e.Message, e.Function, e.File, e.Line)
+	s := e.Message
+	if ShowSource {
+		s += fmt.Sprintf(" (from %s at %s:%d)", e.Function, e.File, e.Line)
+	}
 	if e.Inner != nil {
 		s += " // Inner: " + e.Inner.Error()
 	}
