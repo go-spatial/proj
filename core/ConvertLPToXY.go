@@ -15,19 +15,36 @@ import (
 )
 
 // IConvertLPToXY is for 2D LP->XY conversions
+//
+// This interface requires you support a forward LP-to-XY
+// function and an inverse XY-to-LP function. This is
+// the only conversion type we support today; someday,
+// there will be more interfaces like this, for different
+// input/output types.
+//
+// (Yes, sometimes my interface names still start with "I".
+// Everyone has their own personal moral failings, and this
+// is one of mine.)
 type IConvertLPToXY interface {
 	IOperation
 	Forward(*CoordLP) (*CoordXY, error)
 	Inverse(*CoordXY) (*CoordLP, error)
 }
 
-// ConvertLPToXY is the specific kind of operation
+// ConvertLPToXY is a specific kind of operation, which satisfies
+// the IConvertLPToXY interfaces.
+//
+// Wrapping an operation in this type allows us to provide hooks
+// for the algorithm's forward and inverse functions -- for example,
+// the Forward function needs to be preceeded and suceeded,
+// respectively, by calls to forwardPrepare and forwardFinalize.
 type ConvertLPToXY struct {
 	Operation
 	Algorithm IConvertLPToXY
 }
 
-// NewConvertLPToXY makes a new operation, and the associated alg object
+// NewConvertLPToXY makes a new ConvertLPToXT operation and its associated
+// algorithm object, and returns the operation as an IOperation.
 func NewConvertLPToXY(sys *System, desc *OperationDescription) (IOperation, error) {
 
 	if !desc.IsConvertLPToXY() {
@@ -50,7 +67,7 @@ func NewConvertLPToXY(sys *System, desc *OperationDescription) (IOperation, erro
 
 //---------------------------------------------------------------------
 
-// Forward is the real entry point
+// Forward is the hook-providing entry point to the algorithm.
 func (op *ConvertLPToXY) Forward(lp *CoordLP) (*CoordXY, error) {
 
 	lp, err := op.forwardPrepare(lp)
@@ -71,7 +88,7 @@ func (op *ConvertLPToXY) Forward(lp *CoordLP) (*CoordXY, error) {
 	return xy, err
 }
 
-// Inverse is the real entry point
+// Inverse is the hook-providing entry point to the inverse algorithm.
 func (op *ConvertLPToXY) Inverse(xy *CoordXY) (*CoordLP, error) {
 
 	xy, err := op.inversePrepare(xy)

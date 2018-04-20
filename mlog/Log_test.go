@@ -60,10 +60,11 @@ func TestLogger(t *testing.T) {
 	oldInfo := mlog.InfoEnabled
 	oldError := mlog.ErrorEnabled
 
+	// the following is put in an inlined lambda, so that
+	// we have a place to put the defer: we need it to always get
+	// called immediately after the log stmts run, even if
+	// they crash -- otherwise, we'd have lost our stderr!
 	func() {
-		// the defer is inside a lambda so that it always gets
-		// called immediately after the log stmts run, even if
-		// they crash -- otherwise, we'd have lost our stderr!
 		defer unredirectStderr(savedFd)
 
 		mlog.DebugEnabled = true
@@ -98,10 +99,10 @@ func TestLogger(t *testing.T) {
 	buf = buf[0:n]
 
 	ex := []string{
-		"[DEBUG] Log_test.go:73: debug 1",
-		"[LOG] Log_test.go:74: print 2",
+		"[DEBUG] Log_test.go:74: debug 1",
+		"[LOG] Log_test.go:75: print 2",
 		"[ERROR] E",
-		"[LOG] Log_test.go:78: \"yow\"",
+		"[LOG] Log_test.go:79: \"yow\"",
 	}
 	expected := strings.Join(ex, "\n") + "\n"
 	assert.Equal(expected, string(buf))

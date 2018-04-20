@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// must be run from the "./proj/gie" directory, so it can access the "gie_data" directory
 func TestGie(t *testing.T) {
 	assert := assert.New(t)
 

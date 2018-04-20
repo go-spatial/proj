@@ -16,6 +16,10 @@ import (
 )
 
 // Ellipsoid represents an ellipsoid
+//
+// A System object contains a pointer to one Ellipsoid object. It is pretty
+// close to the original C type, but when it grows up it wants to look and feel
+// like a real Go type.
 type Ellipsoid struct {
 	ID    string
 	Major string
@@ -62,11 +66,12 @@ type Ellipsoid struct {
 	EsOrig, AOrig float64 /* es and a before any +proj related adjustment */
 }
 
-// NewEllipsoid creates an Ellipsoid and initializes it from the proj string
-func NewEllipsoid(op *System) (*Ellipsoid, error) {
+// NewEllipsoid creates an Ellipsoid and initializes it from the
+// information in the given System object
+func NewEllipsoid(sys *System) (*Ellipsoid, error) {
 	ellipsoid := &Ellipsoid{}
 
-	err := ellipsoid.initialize(op)
+	err := ellipsoid.initialize(sys)
 	if err != nil {
 		return nil, err
 	}
@@ -83,9 +88,9 @@ func (e *Ellipsoid) String() string {
 	return string(b)
 }
 
-func (e *Ellipsoid) initialize(op *System) error {
+func (e *Ellipsoid) initialize(sys *System) error {
 
-	ps := op.ProjString
+	ps := sys.ProjString
 
 	/* Specifying R overrules everything */
 	if ps.ContainsKey("R") {
@@ -98,19 +103,19 @@ func (e *Ellipsoid) initialize(op *System) error {
 	}
 
 	/* If an ellps argument is specified, start by using that */
-	err := e.doEllps(op.ProjString)
+	err := e.doEllps(sys.ProjString)
 	if err != nil {
 		return err
 	}
 
 	/* We may overwrite the size */
-	err = e.doSize(op.ProjString)
+	err = e.doSize(sys.ProjString)
 	if err != nil {
 		return err
 	}
 
 	/* We may also overwrite the shape */
-	err = e.doShape(op.ProjString)
+	err = e.doShape(sys.ProjString)
 	if err != nil {
 		return err
 	}
@@ -122,7 +127,7 @@ func (e *Ellipsoid) initialize(op *System) error {
 	}
 
 	/* And finally, we may turn it into a sphere */
-	return e.doSpherification(op.ProjString)
+	return e.doSpherification(sys.ProjString)
 }
 
 func (e *Ellipsoid) doCalcParams(a float64, es float64) error {

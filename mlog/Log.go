@@ -48,6 +48,10 @@ func Printf(format string, v ...interface{}) {
 }
 
 // Printv writes a variable as a regular log message to stderr
+//
+// TODO: would be nice if this could print the variable name
+// (and ideally the private fields too, if reflection allows
+// us access to them)
 func Printv(v interface{}) {
 	if InfoEnabled {
 		//s := fmt.Sprintf("%#v", v)

@@ -80,7 +80,7 @@ Beneath the Conversion API, in the `core` package, lies the _real_ API. With thi
 
 _The Core API is a work in progress._ Only a subset of the full PROJ.4 operations are currently supported, and the structs and interfaces can be expected to evolve as we climb the hill to support more proj string keys, more projections, grid shifts, `.def` files, and so on.
 
-For examples of how to sue the Core API, see the implementation of `proj.Convert` (in `Convert.go`) and see also file `full_test.go` in the `core` package.
+For examples of how to sue the Core API, see the implementation of `proj.Convert` (in `Convert.go`) or the sample app in `cmd/proj`.
 
 
 # The Packages
@@ -101,6 +101,6 @@ Most of the packages have `_test.go` files that demonstrate how the various type
 
 # Future Work
 
-We need to support grid shifts, turn on more proj string keys, make the Ellipse and Datum types be more independent, port a zillion different projection formulae, and on and on. Such future work on `proj` will likely be driven by what coordinate systems and operations people need to be supported: someone will provide a proj string that leads to successful numerical outputs in PROJ.4 but dies in proj.
+We need to support grid shifts, turn on more proj string keys, make the Ellipse and Datum types be more independent, port a zillion different projection formulae, the icky operation typing needs to be rethought, and on and on. Such future work on `proj` will likely be driven by what coordinate systems and operations people need to be supported: someone will provide a proj string that leads to successful numerical outputs in PROJ.4 but dies in proj.
 
 We welcome your participation! See `CONTRIBUTING.md` and/or contact `mpg@flaxen.com` if you'd like to help out on the project.
