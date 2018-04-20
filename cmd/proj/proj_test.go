@@ -30,7 +30,7 @@ func TestCmd(t *testing.T) {
 			[]float64{0.0, 0.0},
 			nil,
 		}, {
-			"proj-epsg 9999 -inverse",
+			"proj -epsg 3395 -inverse",
 			[]float64{0.0, 0.0},
 			nil,
 		}, {
@@ -42,7 +42,7 @@ func TestCmd(t *testing.T) {
 			[]float64{12.0, 55.0},
 			[]float64{691875.63, 6098907.83},
 		}, {
-			"proj -inverse +proj=utm +zone=32 +ellps=GRS80",
+			"proj -verbose -inverse +proj=utm +zone=32 +ellps=GRS80",
 			[]float64{691875.63, 6098907.83},
 			[]float64{12.0, 55.0},
 		},

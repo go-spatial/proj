@@ -22,30 +22,30 @@ const (
 
 // CoordAny just generically holds data, not assigned to a coordinate type.
 // Because unions.
-type CoordAny struct{ v [4]float64 }
+type CoordAny struct{ V [4]float64 }
 
 //---------------------------------------------------------------------
 
 // ToLP returns a CoordLP
 func (c *CoordAny) ToLP() *CoordLP {
-	return &CoordLP{Lam: c.v[0], Phi: c.v[1]}
+	return &CoordLP{Lam: c.V[0], Phi: c.V[1]}
 }
 
 // FromLP sets this CoordAny
 func (c *CoordAny) FromLP(lp *CoordLP) {
-	c.v[0] = lp.Lam
-	c.v[1] = lp.Phi
+	c.V[0] = lp.Lam
+	c.V[1] = lp.Phi
 }
 
 // ToXY returns a CoordXY
 func (c *CoordAny) ToXY() *CoordXY {
-	return &CoordXY{X: c.v[0], Y: c.v[1]}
+	return &CoordXY{X: c.V[0], Y: c.V[1]}
 }
 
 // FromXY sets this CoordAny
 func (c *CoordAny) FromXY(xy *CoordXY) {
-	c.v[0] = xy.Y
-	c.v[1] = xy.Y
+	c.V[0] = xy.X
+	c.V[1] = xy.Y
 }
 
 //---------------------------------------------------------------------

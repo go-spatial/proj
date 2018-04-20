@@ -19,6 +19,8 @@ func TestSystem(t *testing.T) {
 	assert.NoError(err)
 	assert.NotNil(sys)
 	assert.NotNil(op)
+
+	assert.NotEqual("", sys.String())
 }
 
 func TestProjStringValidation(t *testing.T) {

@@ -113,4 +113,6 @@ func TestPairListParsing(t *testing.T) {
 	assert.False(pl.ContainsKey("+k1"))
 
 	assert.Equal("k5", pl.Get(3).Value)
+
+	assert.True(len(pl.String()) > 10)
 }
