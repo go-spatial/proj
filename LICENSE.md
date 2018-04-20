@@ -2,11 +2,20 @@
 
 Proj is a port of [PROJ.4](http://proj4.org) to the Go language (Golang).
 The license terms for this port is same as the original PROJ.4 terms (included
-verbatim below), but the new work's default copyright line is:
+verbatim below).
 
-> `Copyright (C) 2018, Michael P. Gerlek (Flaxen Consulting)`
+The copyright header for this project's files is:
 
-See the `AUTHORS.md` file for a list of all Proj4Go contributors.
+```
+Copyright (C) 2018, Michael P. Gerlek (Flaxen Consulting)
+
+Portions of this code were derived from the PROJ.4 software.
+In keeping with the terms of the PROJ.4 project, this software
+is provided under the MIT-style license in `LICENSE.md` and
+may additionally be subject to the copyrights of the PROJ.4 authors.
+```
+
+See the `CONTRIBUTORS.md` file for a list of all Proj contributors.
 
 
 # Original PROJ.4 License
