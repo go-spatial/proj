@@ -2,6 +2,7 @@ package proj
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/go-spatial/proj/core"
 	"github.com/go-spatial/proj/support"
@@ -21,6 +22,9 @@ const (
 	WebMercator            = EPSG3857
 )
 
+// ensure only one person is updating our cache of converters at a time
+var cacheLock = sync.Mutex{}
+
 // Convert performs a conversion from a 4326 coordinate system (lon/lat
 // degrees, 2D) to the given projected system (x/y meters, 2D).
 //
@@ -32,7 +36,9 @@ const (
 // y1, x2, y2, ...].
 func Convert(dest EPSGCode, input []float64) ([]float64, error) {
 
+	cacheLock.Lock()
 	conv, err := newConversion(dest)
+	cacheLock.Unlock()
 	if err != nil {
 		return nil, err
 	}
