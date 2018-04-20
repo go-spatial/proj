@@ -160,7 +160,7 @@ func ValidateProjStringContents(pl *support.ProjString) error {
 
 	// you have to say +proj=...
 	if pl.CountKey("proj") != 1 {
-		return merror.New(merror.InvalidProjectionSyntax, "proj...proj")
+		return merror.New(merror.InvalidProjectionSyntax, "proj must appear exactly once")
 	}
 	projName, ok := pl.GetAsString("proj")
 	if !ok || projName == "" {
