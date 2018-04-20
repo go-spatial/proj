@@ -33,6 +33,7 @@ func main() {
 // Main is just a callable version of main(), for testing purposes
 func Main(inS io.Reader, outS io.Writer, args []string) error {
 
+	// unverbosify all the things
 	merror.ShowSource = false
 	mlog.DebugEnabled = false
 	mlog.InfoEnabled = false
@@ -71,6 +72,7 @@ func Main(inS io.Reader, outS io.Writer, args []string) error {
 		mlog.ErrorEnabled = true
 	}
 
+	// handle "-epsg" usage, using the Convert API
 	if *epsgDest != 0 {
 		if *inverse {
 			return fmt.Errorf("-inverse not allowed with -epsg")
@@ -80,6 +82,7 @@ func Main(inS io.Reader, outS io.Writer, args []string) error {
 		}
 		input := make([]float64, 2)
 
+		// wrap the converter in a little lambda to be run inside a REPL loop
 		f := func(a, b float64) (float64, float64, error) {
 			input[0] = a
 			input[1] = b
@@ -93,18 +96,25 @@ func Main(inS io.Reader, outS io.Writer, args []string) error {
 		return repl(inS, outS, f)
 	}
 
+	// args is a proj string, so use the Core API
+
+	// parse the proj string into key/value pairs
 	ps, err := support.NewProjString(projString)
 	if err != nil {
 		return err
 	}
 
+	// make a coordinate system object, and the operation object
 	_, opx, err := core.NewSystem(ps)
 	if err != nil {
 		return err
 	}
 
+	// we only support one kind of operation object right now anyway
 	op := opx.(core.IConvertLPToXY)
 
+	// make a lambda with the forward or inverse function, and
+	// send it to the REPL loop
 	if !*inverse {
 
 		f := func(a, b float64) (float64, float64, error) {
@@ -126,11 +136,16 @@ func Main(inS io.Reader, outS io.Writer, args []string) error {
 		}
 		return support.RToDD(output.Lam), support.RToDD(output.Phi), nil
 	}
+
 	return repl(inS, outS, f)
 }
 
+// the type of our lambdas
 type converter func(a, b float64) (float64, float64, error)
 
+// the repl loop reads two input numbers, runs the conversion
+// (which has been wrapped up into a tidy little lambda),
+// and prints the results
 func repl(inS io.Reader, outS io.Writer, f converter) error {
 
 	var a, b float64

@@ -7,10 +7,12 @@
 
 package core
 
-// CoordType is the enum for the differetn intepretations of a Coordinate object
+// CoordType is the enum for the different types of coordinates
 type CoordType int
 
-// The coordinate type
+// The coordinate types
+//
+// Today we are only using CoordTypeLP and CoordTypeXY.
 const (
 	CoordTypeAny = iota
 	CoordTypeXYZT
@@ -28,6 +30,7 @@ const (
 )
 
 // CoordAny just generically holds data, not assigned to a coordinate type.
+//
 // Because unions.
 type CoordAny struct{ V [4]float64 }
 

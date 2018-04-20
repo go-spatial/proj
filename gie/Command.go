@@ -18,17 +18,23 @@ import (
 	"github.com/go-spatial/proj/support"
 )
 
+// the 4 input (or output) values, although
+// we only support 2D (a,b) right now
 type coord struct {
 	a, b, c, d float64 // lam,phi or x,y
 }
 
+// represents a single invocation of the operation
 type testcase struct {
 	inv    bool
 	accept coord
 	expect coord
 }
 
-// Command holds a set of tests as we build them up
+// Command holds a set of testcases
+//
+// As the gie file is read, the current Command object
+// gets modified, testcases get added, etc.
 type Command struct {
 	ProjString      string
 	tolerance       float64
@@ -41,7 +47,7 @@ type Command struct {
 	roundtripDelta  float64
 }
 
-// NewCommand returns a command
+// NewCommand returns a new Command
 func NewCommand(file string, line int, ps string) *Command {
 	c := &Command{
 		ProjString: ps,
@@ -199,7 +205,10 @@ func unitsValue(s string) float64 {
 	panic(s)
 }
 
-// Execute runs the tests
+// Execute runs the testcases
+//
+// First it parses the proj string, then it creates the coordinate system,
+// then it executes the operation for each of the inputs.
 func (c *Command) Execute() error {
 
 	ps, err := support.NewProjString(c.ProjString)

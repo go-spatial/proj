@@ -16,6 +16,9 @@ import (
 	_ "github.com/go-spatial/proj/operations"
 )
 
+// These are the projections we know about. If the projection string has a
+// "proj=" key whose valued is not in this list, the Gie will not try to
+// execute the Command.
 var supportedProjections = []string{
 	"etmerc", "utm",
 	"aea", "leac",
@@ -24,17 +27,23 @@ var supportedProjections = []string{
 	"august",
 }
 
+// If the proj string has one of these keys, we won't execute the Command.
 var unsupportedKeys = []string{
 	"axis",
 	"geoidgrids",
 	"to_meter",
 }
 
+// If the Command is from this file and line, we won't execute the
+// Command -- this acts as a way to shut off tests we don't like.
 var skippedTests = []string{
 	"ellipsoid.gie:64",
 }
 
-// Gie manages the GIE reading and executing processes
+// Gie is the top-level object for the Gie test runner
+//
+// Gie manages reading and parsing the .gie files and then
+// executing the commands and their testcases.
 type Gie struct {
 	dir      string
 	files    []string
@@ -64,7 +73,7 @@ func NewGie(dir string) (*Gie, error) {
 	return g, nil
 }
 
-// Parse reads the .gie file and creates the commands
+// Parse reads the .gie files and creates the commands
 func (g *Gie) Parse() error {
 	for _, file := range g.files {
 		p, err := NewParser(file)

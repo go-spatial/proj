@@ -47,32 +47,32 @@ type Aea struct {
 	ellips bool
 }
 
-// NewAea is
+// NewAea is from PJ_aea.c
 func NewAea(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
-	xxx := &Aea{
+	op := &Aea{
 		isLambert: false,
 	}
-	xxx.System = system
+	op.System = system
 
-	err := xxx.aeaSetup(system)
+	err := op.aeaSetup(system)
 	if err != nil {
 		return nil, err
 	}
-	return xxx, nil
+	return op, nil
 }
 
 // NewLeac is too
 func NewLeac(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
-	xxx := &Aea{
+	op := &Aea{
 		isLambert: true,
 	}
-	xxx.System = system
+	op.System = system
 
-	err := xxx.leacSetup(system)
+	err := op.leacSetup(system)
 	if err != nil {
 		return nil, err
 	}
-	return xxx, nil
+	return op, nil
 }
 
 //---------------------------------------------------------------------
@@ -109,12 +109,12 @@ func phi1(qs, Te, tOneEs float64) float64 {
 	return math.MaxFloat64
 }
 
-func (aea *Aea) localSetup(sys *core.System) error {
+func (op *Aea) setup(sys *core.System) error {
 	var cosphi, sinphi float64
 	var secant bool
 
-	Q := aea
-	P := aea.System
+	Q := op
+	P := op.System
 	PE := P.Ellipsoid
 
 	if math.Abs(Q.phi1+Q.phi2) < eps10 {
@@ -164,10 +164,10 @@ func (aea *Aea) localSetup(sys *core.System) error {
 }
 
 // Forward goes frontwords
-func (aea *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
+func (op *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
-	Q := aea
-	PE := aea.System.Ellipsoid
+	Q := op
+	PE := op.System.Ellipsoid
 
 	var t float64
 	if Q.ellips {
@@ -187,11 +187,11 @@ func (aea *Aea) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 }
 
 // Inverse goes backwards
-func (aea *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
+func (op *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
-	Q := aea
-	PE := aea.System.Ellipsoid
+	Q := op
+	PE := op.System.Ellipsoid
 
 	xy.Y = Q.rho0 - xy.Y
 	Q.rho = math.Hypot(xy.X, xy.Y)
@@ -240,38 +240,38 @@ func (aea *Aea) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 	return lp, nil
 }
 
-func (aea *Aea) aeaSetup(sys *core.System) error {
+func (op *Aea) aeaSetup(sys *core.System) error {
 
-	lat1, ok := aea.System.ProjString.GetAsFloat("lat_1")
+	lat1, ok := op.System.ProjString.GetAsFloat("lat_1")
 	if !ok {
 		lat1 = 0.0
 	}
-	lat2, ok := aea.System.ProjString.GetAsFloat("lat_2")
+	lat2, ok := op.System.ProjString.GetAsFloat("lat_2")
 	if !ok {
 		lat2 = 0.0
 	}
 
-	aea.phi1 = support.DDToR(lat1)
-	aea.phi2 = support.DDToR(lat2)
+	op.phi1 = support.DDToR(lat1)
+	op.phi2 = support.DDToR(lat2)
 
-	return aea.localSetup(aea.System)
+	return op.setup(op.System)
 }
 
-func (aea *Aea) leacSetup(sys *core.System) error {
+func (op *Aea) leacSetup(sys *core.System) error {
 
-	lat1, ok := aea.System.ProjString.GetAsFloat("lat_1")
+	lat1, ok := op.System.ProjString.GetAsFloat("lat_1")
 	if !ok {
 		lat1 = 0.0
 	}
 
 	south := -support.PiOverTwo
-	_, ok = aea.System.ProjString.GetAsInt("south")
+	_, ok = op.System.ProjString.GetAsInt("south")
 	if !ok {
 		south = support.PiOverTwo
 	}
 
-	aea.phi2 = support.DDToR(lat1)
-	aea.phi1 = south
+	op.phi2 = support.DDToR(lat1)
+	op.phi1 = south
 
-	return aea.localSetup(aea.System)
+	return op.setup(op.System)
 }

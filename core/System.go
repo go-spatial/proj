@@ -20,7 +20,7 @@ import (
 // DatumType is the enum for the types of datums we support
 type DatumType int
 
-// All the DatumType constants
+// All the DatumType constants (taken directly from the C)
 const (
 	DatumTypeUnknown   DatumType = 0
 	DatumType3Param              = 1
@@ -53,10 +53,12 @@ const (
 
 const epsLat = 1.0e-12
 
-// System contains all the info needed to describe an "operation",
-// i.e. a "conversion" (no datum change) or a "transformation".
+// System contains all the info needed to describe a coordinate system and
+// related info.
 //
-// In PROJ.4, a "projection" is a conversion from "angular" input to "scaled linear" output.
+// This type needs to be improved, as it is still quite close to the
+// original C. Types like Ellipsoid and Datum represent a first step
+// towards a refactoring.
 type System struct {
 	ProjString *support.ProjString
 	OpDescr    *OperationDescription
@@ -123,7 +125,7 @@ type System struct {
 	//double        last_after_date;      /* TODO: Description needed */
 }
 
-// NewSystem returns a new Operation object
+// NewSystem returns a new System object
 func NewSystem(ps *support.ProjString) (*System, IOperation, error) {
 
 	err := ValidateProjStringContents(ps)

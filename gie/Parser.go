@@ -13,7 +13,8 @@ import (
 	"strings"
 )
 
-// Parser reads a .gie file and returns the commands
+// Parser reads the .gie files and returns the list of commands
+// it constructed
 type Parser struct {
 	lines    []string
 	Commands []*Command
@@ -22,6 +23,10 @@ type Parser struct {
 }
 
 // NewParser creates a Parser object and runs the parser
+//
+// The parser runs one line at time. It's not quite clear
+// what the official .gie format is supposed to be, so we
+// use a very dumb but effective approach.
 func NewParser(fname string) (*Parser, error) {
 
 	lines, err := readLines(fname)
@@ -58,16 +63,11 @@ func NewParser(fname string) (*Parser, error) {
 			continue
 		}
 
-		//if p.lines[0] != "" && (p.lines[0][0:1] >= "A" && p.lines[0][0:1] >= "Z") {
-		//fmt.Printf("[%s:%d] JUNK: %s\n", p.fname, p.lineNum, p.lines[0])
-		//}
-
+		// anything left here has to be part of a comment section,
+		// so we throw it away
 		p.pop()
 	}
 
-	//for _, c := range p.cmds {
-	//fmt.Printf("CMD %s\n", c.proj)
-	//}
 	return p, nil
 }
 
