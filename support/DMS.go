@@ -29,7 +29,7 @@ func DMSToDD(input string) (float64, error) {
 
 	tokens := r.FindStringSubmatch(input)
 	if tokens == nil {
-		return 0.0, merror.New(merror.ErrInvalidArg)
+		return 0.0, merror.New(merror.InvalidArg)
 	}
 
 	sign := tokens[1]

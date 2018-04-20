@@ -68,5 +68,5 @@ func InvMlfn(arg float64, es float64, en []float64) (float64, error) {
 		}
 	}
 
-	return phi, merror.New(merror.ErrInvMlfn)
+	return phi, merror.New(merror.InvMlfn)
 }

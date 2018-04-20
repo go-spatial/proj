@@ -111,7 +111,7 @@ func (aea *Aea) localSetup(sys *core.System) error {
 	PE := P.Ellipsoid
 
 	if math.Abs(Q.phi1+Q.phi2) < eps10 {
-		return merror.New(merror.ErrConicLatEqual)
+		return merror.New(merror.ConicLatEqual)
 	}
 	sinphi = math.Sin(Q.phi1)
 	Q.n = sinphi
@@ -132,7 +132,7 @@ func (aea *Aea) localSetup(sys *core.System) error {
 			m2 = support.Msfn(sinphi, cosphi, PE.Es)
 			ml2 = support.Qsfn(sinphi, PE.E, PE.OneEs)
 			if ml2 == ml1 {
-				return merror.New(merror.ErrAeaSetupFailed)
+				return merror.New(merror.AeaSetupFailed)
 			}
 
 			Q.n = (m1*m1 - m2*m2) / (ml2 - ml1)

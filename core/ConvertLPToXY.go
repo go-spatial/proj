@@ -91,7 +91,7 @@ func (op *ConvertLPToXY) forwardPrepare(lp *CoordLP) (*CoordLP, error) {
 	sys := op.System
 
 	if math.MaxFloat64 == lp.Lam {
-		return nil, merror.New(merror.ErrCoordinateError)
+		return nil, merror.New(merror.CoordinateError)
 	}
 
 	/* Check validity of angular input coordinates */
@@ -105,7 +105,7 @@ func (op *ConvertLPToXY) forwardPrepare(lp *CoordLP) (*CoordLP, error) {
 			t = lp.Phi - support.PiOverTwo
 		}
 		if t > epsLat || lp.Lam > 10 || lp.Lam < -10 {
-			return nil, merror.New(merror.ErrLatOrLonExceededLimit)
+			return nil, merror.New(merror.LatOrLonExceededLimit)
 		}
 
 		/* Clamp latitude to -90..90 degree range */
@@ -177,7 +177,7 @@ func (op *ConvertLPToXY) inversePrepare(coo *CoordXY) (*CoordXY, error) {
 	sys := op.System
 
 	if coo.X == math.MaxFloat64 {
-		return nil, merror.New(merror.ErrInvalidXOrY)
+		return nil, merror.New(merror.InvalidXOrY)
 	}
 
 	/* Handle remaining possible input types */

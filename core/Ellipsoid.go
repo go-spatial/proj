@@ -197,7 +197,7 @@ func (e *Ellipsoid) doEllps(ps *support.ProjString) error {
 
 	/* Then look up the right size and shape parameters from the builtin list */
 	if name == "" {
-		return merror.New(merror.ErrInvalidArg)
+		return merror.New(merror.InvalidArg)
 	}
 
 	ellps, ok := support.EllipsoidsTable[name]
@@ -317,7 +317,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	case "rf":
 		P.Rf = foundValue
 		if P.Rf == math.MaxFloat64 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		if P.Rf == 0 {
 			return merror.New(merror.ReverseFlatteningIsZero)
@@ -329,10 +329,10 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	case "f":
 		P.F = foundValue
 		if P.F == math.MaxFloat64 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		if P.F == 0 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		P.Rf = 1 / P.F
 		P.Es = 2*P.F - P.F*P.F
@@ -341,7 +341,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	case "es":
 		P.Es = foundValue
 		if P.Es == math.MaxFloat64 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		if P.Es == 1 {
 			return merror.New(merror.EccentricityIsOne)
@@ -351,10 +351,10 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	case "e":
 		P.E = foundValue
 		if P.E == math.MaxFloat64 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		if P.E == 0 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		if P.E == 1 {
 			return merror.New(merror.EccentricityIsOne)
@@ -365,7 +365,7 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 	case "b":
 		P.B = foundValue
 		if P.B == math.MaxFloat64 {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		if P.B == 0 {
 			return merror.New(merror.EccentricityIsOne)
@@ -377,12 +377,12 @@ func (e *Ellipsoid) doShape(ps *support.ProjString) error {
 		P.Es = 2*P.F - P.F*P.F
 
 	default:
-		return merror.New(merror.ErrInvalidArg)
+		return merror.New(merror.InvalidArg)
 
 	}
 
 	if P.Es < 0 {
-		return merror.New(merror.ErrEsLessThanZero)
+		return merror.New(merror.EsLessThanZero)
 	}
 
 	return nil
@@ -448,14 +448,14 @@ func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 	case "R_lat_a", "R_lat_g":
 		v, ok := ps.GetAsString(key)
 		if !ok {
-			return merror.New(merror.ErrInvalidArg)
+			return merror.New(merror.InvalidArg)
 		}
 		t, err := support.DMSToR(v)
 		if err != nil {
 			return err
 		}
 		if math.Abs(t) > support.PiOverTwo {
-			return merror.New(merror.ErrRefRadLargerThan90)
+			return merror.New(merror.RefRadLargerThan90)
 		}
 		t = math.Sin(t)
 		t = 1 - P.Es*t*t
@@ -466,7 +466,7 @@ func (e *Ellipsoid) doSpherification(ps *support.ProjString) error {
 		}
 
 	default:
-		return merror.New(merror.ErrInvalidArg)
+		return merror.New(merror.InvalidArg)
 
 	}
 
