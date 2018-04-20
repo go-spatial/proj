@@ -31,9 +31,3 @@ func (op *Operation) GetSystem() *System {
 func (op *Operation) GetDescription() *OperationDescription {
 	return op.Description
 }
-
-// GetSignature returns the operation type, the input type, and the output type
-func (op *Operation) GetSignature() (OperationType, CoordType, CoordType) {
-	d := op.Description
-	return d.OperationType, d.InputType, d.OutputType
-}
