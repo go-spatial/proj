@@ -1,4 +1,4 @@
-package operations_test
+package gie_test
 
 import (
 	"fmt"
