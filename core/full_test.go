@@ -32,7 +32,7 @@ func TestUtm(t *testing.T) {
 	assert.NoError(err)
 
 	x, y := output.X, output.Y
-	assert.InDelta(691875.63, x, 1e-2) // TODO: should be like 1e-8?
+	assert.InDelta(691875.63, x, 1e-2)
 	assert.InDelta(6098907.83, y, 1e-2)
 
 	input2 := output
