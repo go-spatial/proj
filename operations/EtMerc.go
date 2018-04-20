@@ -44,30 +44,30 @@ type EtMerc struct {
 
 // NewEtMerc returns a new EtMerc
 func NewEtMerc(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
-	xxx := &EtMerc{
+	op := &EtMerc{
 		isUtm: false,
 	}
-	xxx.System = system
+	op.System = system
 
-	err := xxx.etmercSetup(system)
+	err := op.etmercSetup(system)
 	if err != nil {
 		return nil, err
 	}
-	return xxx, nil
+	return op, nil
 }
 
 // NewUtm returns a new EtMerc
 func NewUtm(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
-	xxx := &EtMerc{
+	op := &EtMerc{
 		isUtm: true,
 	}
-	xxx.System = system
+	op.System = system
 
-	err := xxx.utmSetup(system)
+	err := op.utmSetup(system)
 	if err != nil {
 		return nil, err
 	}
-	return xxx, nil
+	return op, nil
 }
 
 //---------------------------------------------------------------------
@@ -91,7 +91,7 @@ func log1py(x float64) float64 { /* Compute log(1+x) accurately */
 
 func asinhy(x float64) float64 { /* Compute asinh(x) accurately */
 	y := math.Abs(x) /* Enforce odd parity */
-	y = log1py(y * (1 + y/(support.Hypot(1.0, y)+1)))
+	y = log1py(y * (1 + y/(math.Hypot(1.0, y)+1)))
 	if x < 0 {
 		return -y
 	}
@@ -180,12 +180,14 @@ func clens(a []float64, lenA int, argR float64) float64 {
 	return math.Sin(argR) * hr
 }
 
+//---------------------------------------------------------------------------
+
 // Forward operation -- Ellipsoidal, forward
-func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
+func (op *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
-	var Q = xxx
+	var Q = op
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
 	Cn := lp.Phi
 	Ce := lp.Lam
@@ -197,7 +199,7 @@ func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	sinCe, cosCe = math.Sincos(Ce)
 
 	Cn = math.Atan2(sinCn, cosCe*cosCn)
-	Ce = math.Atan2(sinCe*cosCn, support.Hypot(sinCn, cosCn*cosCe))
+	Ce = math.Atan2(sinCe*cosCn, math.Hypot(sinCn, cosCn*cosCe))
 
 	/* compl. sph. N, E -> ell. norm. N, E */
 	Ce = asinhy(math.Tan(Ce)) /* Replaces: Ce  = log(tan(FORTPI + Ce*0.5)); */
@@ -214,11 +216,11 @@ func (xxx *EtMerc) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 }
 
 // Inverse operation (Ellipsoidal, inverse)
-func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
+func (op *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 
 	lp := &core.CoordLP{Lam: 0.0, Phi: 0.0}
 
-	Q := xxx
+	Q := op
 	var sinCn, cosCn, cosCe, sinCe, dCn, dCe float64
 	Cn := xy.Y
 	Ce := xy.X
@@ -236,7 +238,7 @@ func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 		sinCn, cosCn = math.Sincos(Cn)
 		sinCe, cosCe = math.Sincos(Ce)
 		Ce = math.Atan2(sinCe, cosCe*cosCn)
-		Cn = math.Atan2(sinCn*cosCe, support.Hypot(sinCe, cosCe*cosCn))
+		Cn = math.Atan2(sinCn*cosCe, math.Hypot(sinCe, cosCe*cosCn))
 		/* Gaussian LAT, LNG -> ell. LAT, LNG */
 		lp.Phi = gatg(Q.cgb[:], etmercOrder, Cn)
 		lp.Lam = Ce
@@ -248,10 +250,10 @@ func (xxx *EtMerc) Inverse(xy *core.CoordXY) (*core.CoordLP, error) {
 }
 
 /* general initialization */
-func (xxx *EtMerc) localSetup(P *core.System) error {
+func (op *EtMerc) setup(P *core.System) error {
 	var f, n, np, Z float64
 
-	Q := xxx
+	Q := op
 
 	PE := P.Ellipsoid
 
@@ -338,29 +340,29 @@ func (xxx *EtMerc) localSetup(P *core.System) error {
 	return nil
 }
 
-func (xxx *EtMerc) etmercSetup(op *core.System) error {
+func (op *EtMerc) etmercSetup(sys *core.System) error {
 
-	return xxx.localSetup(op)
+	return op.setup(sys)
 }
 
 /* utm uses etmerc for the underlying projection */
 
-func (xxx *EtMerc) utmSetup(op *core.System) error {
+func (op *EtMerc) utmSetup(sys *core.System) error {
 
-	if op.Ellipsoid.Es == 0.0 {
+	if sys.Ellipsoid.Es == 0.0 {
 		return merror.New(merror.EllipsoidUseRequired)
 	}
-	if op.Lam0 < -1000.0 || op.Lam0 > 1000.0 {
+	if sys.Lam0 < -1000.0 || sys.Lam0 > 1000.0 {
 		return merror.New(merror.InvalidUTMZone)
 	}
 
-	op.Y0 = 0.0
-	if op.ProjString.ContainsKey("south") {
-		op.Y0 = 10000000.0
+	sys.Y0 = 0.0
+	if sys.ProjString.ContainsKey("south") {
+		sys.Y0 = 10000000.0
 	}
-	op.X0 = 500000.0
+	sys.X0 = 500000.0
 
-	zone, ok := op.ProjString.GetAsInt("zone") /* zone input ? */
+	zone, ok := sys.ProjString.GetAsInt("zone") /* zone input ? */
 	if ok {
 		if zone > 0 && zone <= 60 {
 			zone--
@@ -368,16 +370,16 @@ func (xxx *EtMerc) utmSetup(op *core.System) error {
 			return merror.New(merror.InvalidUTMZone)
 		}
 	} else { /* nearest central meridian input */
-		zone = (int)(math.Floor((support.Adjlon(op.Lam0) + support.Pi) * 30. / support.Pi))
+		zone = (int)(math.Floor((support.Adjlon(sys.Lam0) + support.Pi) * 30. / support.Pi))
 		if zone < 0 {
 			zone = 0
 		} else if zone >= 60 {
 			zone = 59
 		}
 	}
-	op.Lam0 = (float64(zone)+0.5)*support.Pi/30.0 - support.Pi
-	op.K0 = 0.9996
-	op.Phi0 = 0.0
+	sys.Lam0 = (float64(zone)+0.5)*support.Pi/30.0 - support.Pi
+	sys.K0 = 0.9996
+	sys.Phi0 = 0.0
 
-	return xxx.localSetup(op)
+	return op.setup(sys)
 }

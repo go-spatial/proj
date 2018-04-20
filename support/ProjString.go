@@ -15,11 +15,6 @@ import (
 	"github.com/go-spatial/proj/merror"
 )
 
-// ProjString represents a "projection string", such as "+proj=utm +zone=11 +datum=WGS84"
-// TODO: we don't support the "pipeline" or "step" keywords
-
-//---------------------------------------------------------------------
-
 // Pair is a simple key-value pair
 // Pairs use copy semantics (pass-by-value).
 type Pair struct {
@@ -29,9 +24,13 @@ type Pair struct {
 
 //---------------------------------------------------------------------
 
-// ProjString is an array of Pair objects.
+// ProjString represents a "projection string", such as "+proj=utm +zone=11 +datum=WGS84"
+//
+// It is just an array of Pair objects.
 // (We can't use a map because order of the items is important and
 // because we might have duplicate keys.)
+//
+// TODO: we don't support the "pipeline" or "step" keywords
 type ProjString struct {
 	Pairs []Pair
 }
@@ -105,7 +104,7 @@ func collapse(s string) string {
 	return s
 }
 
-// DeepCopy returns a detached copy of the ProjString
+// DeepCopy returns a detached deep copy of the ProjString
 func (pl *ProjString) DeepCopy() *ProjString {
 
 	copy := &ProjString{

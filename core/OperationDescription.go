@@ -12,11 +12,14 @@ import (
 )
 
 // OperationDescriptionTable is the global list of all the known operations
+//
+// The algorithms in the operations package call the Register functions
+// which populate this map.
 var OperationDescriptionTable = map[string]*OperationDescription{}
 
 // ConvertLPToXYCreatorFuncType is the type of the function which creates an operation-specific object
 //
-// This kind of function, when executed, creates an operation-specific type
+// This kind of function, when executed, creates an operation-specific object
 // which implements IConvertLPToXY.
 type ConvertLPToXYCreatorFuncType func(*System, *OperationDescription) (IConvertLPToXY, error)
 
@@ -34,6 +37,9 @@ type OperationDescription struct {
 }
 
 // RegisterConvertLPToXY adds an OperationDescription entry to the OperationDescriptionTable
+//
+// Each file in the operations package has an init() routine which calls this function.
+// Each operation supplies its own "creatorFunc", of its own particular type.
 func RegisterConvertLPToXY(
 	id string,
 	description string,

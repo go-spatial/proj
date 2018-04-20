@@ -7,7 +7,7 @@
 
 package operations
 
-/*** we need to port the geodesic.h functions before we can uncomment this ***/
+/*** WE NEED TO PORT THE geodesic.h FUNCTIONS BEFORE WE CAN UNCOMMENT THIS ***/
 
 /***
 

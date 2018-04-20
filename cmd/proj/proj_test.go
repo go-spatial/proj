@@ -24,7 +24,7 @@ func TestCmd(t *testing.T) {
 	type testcase struct {
 		args   string
 		input  []float64
-		output []float64
+		output []float64 // set to nil for expected fails
 	}
 
 	testcases := []testcase{

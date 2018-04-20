@@ -37,21 +37,21 @@ type Airy struct {
 
 // NewAiry returns a new Airy
 func NewAiry(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
-	xxx := &Airy{}
-	xxx.System = system
+	op := &Airy{}
+	op.System = system
 
-	err := xxx.setup(system)
+	err := op.setup(system)
 	if err != nil {
 		return nil, err
 	}
-	return xxx, nil
+	return op, nil
 }
 
 // Forward goes forewards
-func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
+func (op *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
-	Q := airy
+	Q := op
 
 	var sinlam, coslam, cosphi, sinphi, t, Krho, cosz float64
 
@@ -108,16 +108,16 @@ func (airy *Airy) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 }
 
 // Inverse is not allowed
-func (airy *Airy) Inverse(*core.CoordXY) (*core.CoordLP, error) {
+func (*Airy) Inverse(*core.CoordXY) (*core.CoordLP, error) {
 	panic("no such conversion")
 }
 
-func (airy *Airy) setup(sys *core.System) error {
+func (op *Airy) setup(sys *core.System) error {
 	var beta float64
 
-	Q := airy
-	P := airy.System
-	PE := airy.System.Ellipsoid
+	Q := op
+	P := op.System
+	PE := op.System.Ellipsoid
 
 	Q.nocut = P.ProjString.ContainsKey("no_cut")
 	latb, ok := P.ProjString.GetAsFloat("lat_b")

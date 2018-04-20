@@ -45,7 +45,8 @@ func New(format string, v ...interface{}) error {
 	return err
 }
 
-// Wrap returns a new Error object which contains another error object
+// Wrap returns a new Error object which contains the given error object
+//
 // If v is used, v[0] must be a format string.
 func Wrap(inner error, v ...interface{}) error {
 	file, line, function := stackinfo(2)

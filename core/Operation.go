@@ -8,6 +8,8 @@
 package core
 
 // OperationType is the enum for the different kinds of conversions and transforms
+//
+// This may turn out not to be as useful as it originally seemed.
 type OperationType int
 
 // The operation type
@@ -17,24 +19,24 @@ const (
 	OperationTypeTransformation
 )
 
-// IOperation is for all the operation
+// IOperation is what all the operations need to support
 type IOperation interface {
 	GetSystem() *System
 	GetDescription() *OperationDescription
 }
 
-// Operation is for all operations
+// Operation is the base class for all operations
 type Operation struct {
 	System      *System
 	Description *OperationDescription
 }
 
-// GetSystem returns the system
+// GetSystem returns the System object the operation is associated with
 func (op *Operation) GetSystem() *System {
 	return op.System
 }
 
-// GetDescription returns the descr
+// GetDescription returns the OperationDescription of the operation
 func (op *Operation) GetDescription() *OperationDescription {
 	return op.Description
 }

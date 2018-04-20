@@ -8,6 +8,10 @@
 package core
 
 // PrimeMeridian contains information about a prime meridian
+//
+// Someday, this will be a rich type with lots of methods and stuff.
+//
+// Today, it is not.
 type PrimeMeridian struct {
 	ID         string
 	Definition string

@@ -30,17 +30,17 @@ const m = 1.333333333333333
 
 // NewAugust returns a new August
 func NewAugust(system *core.System, desc *core.OperationDescription) (core.IConvertLPToXY, error) {
-	xxx := &August{}
-	xxx.System = system
+	op := &August{}
+	op.System = system
 
-	PE := xxx.System.Ellipsoid
+	PE := op.System.Ellipsoid
 	PE.Es = 0.0
 
-	return xxx, nil
+	return op, nil
 }
 
 // Forward goes forewards
-func (august *August) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
+func (op *August) Forward(lp *core.CoordLP) (*core.CoordXY, error) {
 	xy := &core.CoordXY{X: 0.0, Y: 0.0}
 
 	var t, c1, c, x1, x12, y1, y12 float64
