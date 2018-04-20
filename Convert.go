@@ -34,7 +34,7 @@ func Convert(dest EPSGCode, input []float64) ([]float64, error) {
 
 	conv, err := newConversion(dest)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	return conv.convert(input)
