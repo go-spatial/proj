@@ -1,10 +1,11 @@
 # Proj License
 
 Proj is a port of [PROJ.4](http://proj4.org) to the Go language (Golang).
-The license terms for this port is same as the original PROJ.4 terms (included
-verbatim below).
+The license terms for this port are the same as the original PROJ.4 terms
+(included verbatim below).
 
 See the `CONTRIBUTORS.md` file for a list of all Proj contributors.
+
 
 # Proj License
 
