@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"regexp"
 
 	"github.com/go-spatial/proj/merror"
 )
@@ -85,22 +86,14 @@ func NewProjString(source string) (*ProjString, error) {
 }
 
 // handle extra whitespace in lines like "  +proj = merc   x = 1.2  "
-//
-// repeat a bunch of simple replacements until nothing changes anymore
-// TODO: this is a bad hack
 func collapse(s string) string {
+	re_leadclose_whtsp := regexp.MustCompile(`^[\s\p{Zs}]+|[\s\p{Zs}]+$`)
+	re_inside_whtsp := regexp.MustCompile(`[\s\p{Zs}]{2,}`)
+	re_equal_whtsp := regexp.MustCompile(`\s?[=]\s?`)
+	s = re_leadclose_whtsp.ReplaceAllString(s, "")
+	s = re_inside_whtsp.ReplaceAllString(s, " ")
+	s = re_equal_whtsp.ReplaceAllString(s, "=")
 
-	for {
-		t := strings.Replace(s, "\t", " ", -1)
-		t = strings.Replace(t, "  ", " ", -1)
-		t = strings.Replace(t, " =", "=", -1)
-		t = strings.Replace(t, "= ", "=", -1)
-
-		if s == t {
-			break
-		}
-		s = t
-	}
 	return s
 }
 
