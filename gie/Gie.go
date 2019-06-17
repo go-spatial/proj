@@ -25,7 +25,7 @@ var supportedProjections = []string{
 	"merc",
 	"airy",
 	"august",
-	"eqc"
+	"eqc",
 }
 
 // If the proj string has one of these keys, we won't execute the Command.
