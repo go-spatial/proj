@@ -53,6 +53,17 @@ var testcases = []testcase{
 			-8641240.37, 4697899.31,
 		},
 	},
+	{
+		dest: proj.EPSG4087,
+		expectedA: []float64{
+			-14221.96, 5733772.09,
+			261848.16, 5438693.39,
+			1391089.10, 4664596.47,
+		},
+		expectedB: []float64{
+			-8641240.37, 4322963.96,
+		},
+	},
 }
 
 func TestConvert(t *testing.T) {
