@@ -23,11 +23,14 @@ type EPSGCode int
 
 // Supported EPSG codes
 const (
-	EPSG3395      EPSGCode = 3395
-	WorldMercator          = EPSG3395
-	EPSG3857               = 3857
-	WebMercator            = EPSG3857
-	EPSG4087               = 4087
+	EPSG3395                    EPSGCode = 3395
+	WorldMercator                        = EPSG3395
+	EPSG3857                             = 3857
+	WebMercator                          = EPSG3857
+	EPSG4087                             = 4087
+	WorldEquidistantCylindrical          = EPSG4087
+	EPSG4326                             = 4326
+	WGS84                                = EPSG4326
 )
 
 // ensure only one person is updating our cache of converters at a time
@@ -54,6 +57,26 @@ func Convert(dest EPSGCode, input []float64) ([]float64, error) {
 	return conv.convert(input)
 }
 
+// Inverse converts from a projected X/Y of a coordinate system to
+// 4326 (lat/lon, 2D).
+//
+// The input is assumed to be an array of x/y points, e.g. [x0, y0,
+// x1, y1, x2, y2, ...]. The length of the array must, therefore, be
+// even.
+//
+// The returned output is a similar array of lon/lat points, e.g. [lon0, lat0, lon1,
+// lat1, lon2, lat2, ...].
+func Inverse(src EPSGCode, input []float64) ([]float64, error) {
+	cacheLock.Lock()
+	conv, err := newConversion(src)
+	cacheLock.Unlock()
+	if err != nil {
+		return nil, err
+	}
+
+	return conv.inverse(input)
+}
+
 //---------------------------------------------------------------------------
 
 // conversion holds the objects needed to perform a conversion
@@ -70,7 +93,7 @@ var conversions = map[EPSGCode]*conversion{}
 var projStrings = map[EPSGCode]string{
 	EPSG3395: "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84",                            // TODO: support +units=m +no_defs
 	EPSG3857: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0", // TODO: support +units=m +nadgrids=@null +wktext +no_defs
-	EPSG4087: "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84",
+	EPSG4087: "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84",               // TODO: support +units=m +no_defs
 }
 
 // newConversion creates a conversion object for the destination systems. If
@@ -143,6 +166,38 @@ func (conv *conversion) convert(input []float64) ([]float64, error) {
 
 		output[i] = xy.X
 		output[i+1] = xy.Y
+	}
+
+	return output, nil
+}
+
+func (conv *conversion) inverse(input []float64) ([]float64, error) {
+	if conv == nil || conv.converter == nil {
+		return nil, fmt.Errorf("conversion not initialized")
+	}
+
+	if len(input)%2 != 0 {
+		return nil, fmt.Errorf("input array of x/y values must be an even number")
+	}
+
+	output := make([]float64, len(input))
+
+	xy := &core.CoordXY{}
+
+	for i := 0; i < len(input); i += 2 {
+		xy.X = input[i]
+		xy.Y = input[i+1]
+
+		lp, err := conv.converter.Inverse(xy)
+
+		if err != nil {
+			return nil, err
+		}
+
+		l, p := lp.Lam, lp.Phi
+
+		output[i] = support.RToDD(l)
+		output[i+1] = support.RToDD(p)
 	}
 
 	return output, nil

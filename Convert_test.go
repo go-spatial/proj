@@ -77,6 +77,11 @@ func TestConvert(t *testing.T) {
 		outputB, err := proj.Convert(tc.dest, inputB)
 		assert.NoError(err)
 
+		invA, err := proj.Inverse(tc.dest, tc.expectedA)
+		assert.NoError(err)
+
+		invB, err := proj.Inverse(tc.dest, tc.expectedB)
+
 		const tol = 1.0e-2
 
 		for i := range tc.expectedA {
@@ -88,6 +93,16 @@ func TestConvert(t *testing.T) {
 			tag := fmt.Sprintf("epsg:%d, input=B.%d", int(tc.dest), i)
 			assert.InDelta(tc.expectedB[i], outputB[i], tol, tag)
 			assert.InDelta(tc.expectedB[i], outputB[i], tol, tag)
+		}
+
+		for i := range tc.expectedA {
+			tag := fmt.Sprintf("inverse: epsg:%d, input=A.%d", int(tc.dest), i)
+			assert.InDelta(invA[i], inputA[i], tol, tag)
+		}
+
+		for i := range tc.expectedB {
+			tag := fmt.Sprintf("inverse: epsg:%d, input=B.%d", int(tc.dest), i)
+			assert.InDelta(invB[i], inputB[i], tol, tag)
 		}
 	}
 }
