@@ -81,6 +81,7 @@ func TestConvert(t *testing.T) {
 		assert.NoError(err)
 
 		invB, err := proj.Inverse(tc.dest, tc.expectedB)
+		assert.NoError(err)
 
 		const tol = 1.0e-2
 
@@ -104,6 +105,67 @@ func TestConvert(t *testing.T) {
 			tag := fmt.Sprintf("inverse: epsg:%d, input=B.%d", int(tc.dest), i)
 			assert.InDelta(invB[i], inputB[i], tol, tag)
 		}
+	}
+}
+
+func TestEnsureRaisedError(t *testing.T) {
+	type testcase struct {
+		op          string
+		pt          []float64
+		expectedErr string
+		srid        proj.EPSGCode
+	}
+
+	fn := func(tc testcase) func(t *testing.T) {
+		return func(t *testing.T) {
+			var err error
+
+			if tc.op == "convert" {
+				_, err = proj.Convert(proj.EPSGCode(tc.srid), tc.pt)
+			} else {
+				_, err = proj.Inverse(proj.EPSGCode(tc.srid), tc.pt)
+			}
+
+			if err == nil {
+				t.Errorf("didn't get expected error: %v", tc.expectedErr)
+				return
+			}
+
+			if err.Error() != tc.expectedErr {
+				t.Errorf("error: %v not equal to expected error: %v", err.Error(), tc.expectedErr)
+			}
+		}
+	}
+
+	tests := map[string]testcase{
+		"3857 out of bounds WGS84": {
+			op:          "convert",
+			srid:        proj.WebMercator,
+			pt:          []float64{-180.0, 90.0},
+			expectedErr: "tolerance condition error",
+		},
+		"4326 not supported as source srid": {
+			op:          "convert",
+			srid:        proj.EPSG4326,
+			pt:          []float64{0, 0},
+			expectedErr: "epsg code is not a supported projection",
+		},
+		"convert bad point count": {
+			op:          "convert",
+			srid:        proj.WorldMercator,
+			pt:          []float64{-180.0, 90.0, 11.0},
+			expectedErr: "input array of lon/lat values must be an even number",
+		},
+		"inverse bad point count": {
+			op:          "inverse",
+			srid:        proj.WorldMercator,
+			pt:          []float64{-180.0, 90.0, 11.0},
+			expectedErr: "input array of x/y values must be an even number",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, fn(tc))
 	}
 }
 
