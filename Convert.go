@@ -91,9 +91,9 @@ type conversion struct {
 var conversions = map[EPSGCode]*conversion{}
 
 var projStrings = map[EPSGCode]string{
-	EPSG3395: "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84",                            // TODO: support +units=m +no_defs
-	EPSG3857: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0", // TODO: support +units=m +nadgrids=@null +wktext +no_defs
-	EPSG4087: "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84",               // TODO: support +units=m +no_defs
+	EPSG3395: "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
+	EPSG3857: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs",
+	EPSG4087: "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
 }
 
 // newConversion creates a conversion object for the destination systems. If
