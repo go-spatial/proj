@@ -31,6 +31,10 @@ const (
 	WorldEquidistantCylindrical          = EPSG4087
 	EPSG4326                             = 4326
 	WGS84                                = EPSG4326
+
+	// Netherlands - onshore, including Waddenzee, Dutch Wadden Islands and 12-mile offshore coastal zone
+	EPSG28992                            = 28992
+	Amersfoort                           = EPSG28992
 )
 
 // ensure only one person is updating our cache of converters at a time
@@ -91,9 +95,10 @@ type conversion struct {
 var conversions = map[EPSGCode]*conversion{}
 
 var projStrings = map[EPSGCode]string{
-	EPSG3395: "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84",                            // TODO: support +units=m +no_defs
-	EPSG3857: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0", // TODO: support +units=m +nadgrids=@null +wktext +no_defs
-	EPSG4087: "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84",               // TODO: support +units=m +no_defs
+	EPSG3395:  "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84",                            // TODO: support +units=m +no_defs
+	EPSG3857:  "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0", // TODO: support +units=m +nadgrids=@null +wktext +no_defs
+	EPSG4087:  "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84",               // TODO: support +units=m +no_defs
+	EPSG28992: "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 +units=m +no_defs",
 }
 
 // newConversion creates a conversion object for the destination systems. If
