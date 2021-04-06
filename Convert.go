@@ -77,6 +77,12 @@ func Inverse(src EPSGCode, input []float64) ([]float64, error) {
 	return conv.inverse(input)
 }
 
+// CustomProjection provides write-only access to the internal projection list
+// so that projections may be added without having to modify the library code.
+func CustomProjection(code EPSGCode, str string) {
+	projStrings[code] = str
+}
+
 //---------------------------------------------------------------------------
 
 // conversion holds the objects needed to perform a conversion

@@ -441,13 +441,13 @@ func (sys *System) processMisc() error {
 	/* Central meridian */
 	f, ok := sys.ProjString.GetAsFloat("lon_0")
 	if ok {
-		sys.Lam0 = f
+		sys.Lam0 = f * support.DegToRad
 	}
 
 	/* Central latitude */
 	f, ok = sys.ProjString.GetAsFloat("lat_0")
 	if ok {
-		sys.Phi0 = f
+		sys.Phi0 = f * support.DegToRad
 	}
 
 	/* False easting and northing */
