@@ -139,6 +139,7 @@ func NewSystem(ps *support.ProjString) (*System, IOperation, error) {
 		Left:       IOUnitsAngular,
 		Right:      IOUnitsClassic,
 		Axis:       "enu",
+		FromMeter:  1.0,
 	}
 
 	err = sys.initialize()
@@ -441,13 +442,13 @@ func (sys *System) processMisc() error {
 	/* Central meridian */
 	f, ok := sys.ProjString.GetAsFloat("lon_0")
 	if ok {
-		sys.Lam0 = f
+		sys.Lam0 = f * support.DegToRad
 	}
 
 	/* Central latitude */
 	f, ok = sys.ProjString.GetAsFloat("lat_0")
 	if ok {
-		sys.Phi0 = f
+		sys.Phi0 = f * support.DegToRad
 	}
 
 	/* False easting and northing */
