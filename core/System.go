@@ -139,6 +139,7 @@ func NewSystem(ps *support.ProjString) (*System, IOperation, error) {
 		Left:       IOUnitsAngular,
 		Right:      IOUnitsClassic,
 		Axis:       "enu",
+		FromMeter:  1.0,
 	}
 
 	err = sys.initialize()
