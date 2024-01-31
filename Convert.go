@@ -25,11 +25,11 @@ type EPSGCode int
 const (
 	EPSG3395                    EPSGCode = 3395
 	WorldMercator                        = EPSG3395
-	EPSG3857                             = 3857
+	EPSG3857                    EPSGCode = 3857
 	WebMercator                          = EPSG3857
-	EPSG4087                             = 4087
+	EPSG4087                    EPSGCode = 4087
 	WorldEquidistantCylindrical          = EPSG4087
-	EPSG4326                             = 4326
+	EPSG4326                    EPSGCode = 4326
 	WGS84                                = EPSG4326
 )
 
