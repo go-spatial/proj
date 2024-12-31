@@ -8,102 +8,80 @@
 package mlog_test
 
 import (
+	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"os"
-	"strings"
-	"syscall"
+	"regexp"
 	"testing"
 
 	"github.com/go-spatial/proj/mlog"
-	"github.com/stretchr/testify/assert"
 )
 
-func redirectStderr(f *os.File) int {
-	savedFd, err := syscall.Dup(int(os.Stderr.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	err = syscall.Dup2(int(f.Fd()), int(os.Stderr.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	return savedFd
-}
-
-func unredirectStderr(savedFd int) {
-	err := syscall.Dup2(savedFd, int(os.Stderr.Fd()))
-	if err != nil {
-		log.Fatalf("Failed to redirect stderr to file: %v", err)
-	}
-	syscall.Close(savedFd)
-}
-
 func TestLogger(t *testing.T) {
-	assert := assert.New(t)
+	//assert := assert.New(t)
 
-	tmpfile, err := ioutil.TempFile("", "mlog-test")
+	tmpfile, err := os.CreateTemp("", "mlog-test")
 	if err != nil {
-		panic(err)
+		t.Fatalf("Failed to create temporary file: %v", err)
+		return
 	}
-	defer func() {
-		tmpfile.Close()
-		os.Remove(tmpfile.Name())
-	}()
+	defer tmpfile.Close()
+	tempFilename := tmpfile.Name()
+	t.Cleanup(func() { os.Remove(tempFilename) })
 
-	savedFd := redirectStderr(tmpfile)
-
-	// save log state
-	oldDebug := mlog.DebugEnabled
-	oldInfo := mlog.InfoEnabled
-	oldError := mlog.ErrorEnabled
+	log := mlog.NewLoggerSingleOutput(tmpfile)
+	log.EnableDebug()
+	log.EnableError()
+	log.EnableInfo()
 
 	// the following is put in an inlined lambda, so that
 	// we have a place to put the defer: we need it to always get
 	// called immediately after the log stmts run, even if
 	// they crash -- otherwise, we'd have lost our stderr!
-	func() {
-		defer unredirectStderr(savedFd)
 
-		mlog.DebugEnabled = true
-		mlog.InfoEnabled = true
-		mlog.ErrorEnabled = true
+	log.Debugf("debug %d", 1)
+	log.Printf("print %s", "2")
+	e := fmt.Errorf("E")
+	log.Error(e)
+	x := "yow"
+	log.Printv(x)
 
-		mlog.Debugf("debug %d", 1)
-		mlog.Printf("print %s", "2")
-		e := fmt.Errorf("E")
-		mlog.Error(e)
-		x := "yow"
-		mlog.Printv(x)
+	log.DisableDebug()
+	log.DisableError()
+	log.DisableInfo()
 
-		mlog.DebugEnabled = false
-		mlog.InfoEnabled = false
-		mlog.ErrorEnabled = false
-
-		mlog.Debugf("nope")
-		mlog.Printf("nope")
-		mlog.Error(e)
-	}()
-
-	// restore log state
-	mlog.DebugEnabled = oldDebug
-	mlog.InfoEnabled = oldInfo
-	mlog.ErrorEnabled = oldError
+	log.Debugf("nope")
+	log.Printf("nope")
+	log.Error(e)
 
 	tmpfile.Seek(0, io.SeekStart)
-	buf := make([]byte, 1024)
-	n, err := tmpfile.Read(buf)
-	assert.NoError(err)
-	buf = buf[0:n]
 
-	ex := []string{
-		"[DEBUG] Log_test.go:74: debug 1",
-		"[LOG] Log_test.go:75: print 2",
-		"[ERROR] E",
-		"[LOG] Log_test.go:79: \"yow\"",
+	expectedLines := []string{
+		`\[DEBUG\] Log_test.go:\d+: debug 1`,
+		`\[LOG\] Log_test.go:\d+: print 2`,
+		`\[ERROR\] E`,
+		`\[LOG\] Log_test.go:\d+: "yow"`,
 	}
-	expected := strings.Join(ex, "\n") + "\n"
-	assert.Equal(expected, string(buf))
+
+	scanner := bufio.NewScanner(tmpfile)
+	count := 0
+	for scanner.Scan() {
+		scanner.Text()
+		if count > len(expectedLines) {
+			t.Errorf("Found too many lines, expected %d, got %d", len(expectedLines), count)
+			return
+		}
+		txt := scanner.Text()
+		m, err := regexp.MatchString(expectedLines[count], txt)
+		if err != nil {
+			t.Errorf("error failed to match regexp[%s]: error: %v", expectedLines[count], err)
+			return
+		}
+		if !m {
+			t.Errorf("failed to match regexp[%s]: %s", expectedLines[count], txt)
+			return
+		}
+		count++
+	}
 }
