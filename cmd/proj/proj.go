@@ -35,9 +35,9 @@ func Main(inS io.Reader, outS io.Writer, args []string) error {
 
 	// unverbosify all the things
 	merror.ShowSource = false
-	mlog.DebugEnabled = false
-	mlog.InfoEnabled = false
-	mlog.ErrorEnabled = false
+	mlog.DisableDebug()
+	mlog.DisableInfo()
+	mlog.DisableError()
 
 	cli := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	cli.SetOutput(outS)
@@ -67,9 +67,9 @@ func Main(inS io.Reader, outS io.Writer, args []string) error {
 		}
 
 		merror.ShowSource = true
-		mlog.DebugEnabled = true
-		mlog.InfoEnabled = true
-		mlog.ErrorEnabled = true
+		mlog.EnableDebug()
+		mlog.EnableInfo()
+		mlog.EnableError()
 	}
 
 	// handle "-epsg" usage, using the Convert API

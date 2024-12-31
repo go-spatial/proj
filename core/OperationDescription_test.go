@@ -11,13 +11,12 @@ import (
 	"testing"
 
 	"github.com/go-spatial/proj/core"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOperationDescription(t *testing.T) {
-	assert := assert.New(t)
 
 	opDesc := core.OperationDescriptionTable["utm"]
-	assert.NotNil(opDesc)
+	if opDesc == nil {
+		t.Errorf("operaton description table for utm is nil")
+	}
 }

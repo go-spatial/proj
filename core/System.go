@@ -23,10 +23,10 @@ type DatumType int
 // All the DatumType constants (taken directly from the C)
 const (
 	DatumTypeUnknown   DatumType = 0
-	DatumType3Param              = 1
-	DatumType7Param              = 2
-	DatumTypeGridShift           = 3
-	DatumTypeWGS84               = 4 /* WGS84 (or anything considered equivalent) */
+	DatumType3Param    DatumType = 1
+	DatumType7Param    DatumType = 2
+	DatumTypeGridShift DatumType = 3
+	DatumTypeWGS84     DatumType = 4 /* WGS84 (or anything considered equivalent) */
 )
 
 // IOUnitsType is the enum for the types of input/output units we support
@@ -35,10 +35,10 @@ type IOUnitsType int
 // All the IOUnitsType constants
 const (
 	IOUnitsWhatever  IOUnitsType = 0 /* Doesn't matter (or depends on pipeline neighbours) */
-	IOUnitsClassic               = 1 /* Scaled meters (right), projected system */
-	IOUnitsProjected             = 2 /* Meters, projected system */
-	IOUnitsCartesian             = 3 /* Meters, 3D cartesian system */
-	IOUnitsAngular               = 4 /* Radians */
+	IOUnitsClassic   IOUnitsType = 1 /* Scaled meters (right), projected system */
+	IOUnitsProjected IOUnitsType = 2 /* Meters, projected system */
+	IOUnitsCartesian IOUnitsType = 3 /* Meters, 3D cartesian system */
+	IOUnitsAngular   IOUnitsType = 4 /* Radians */
 )
 
 // DirectionType is the enum for the operation's direction
@@ -47,8 +47,8 @@ type DirectionType int
 // All the DirectionType constants
 const (
 	DirectionForward  DirectionType = 1  /* Forward    */
-	DirectionIdentity               = 0  /* Do nothing */
-	DirectionInverse                = -1 /* Inverse    */
+	DirectionIdentity DirectionType = 0  /* Do nothing */
+	DirectionInverse  DirectionType = -1 /* Inverse    */
 )
 
 const epsLat = 1.0e-12
